@@ -1,0 +1,175 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - bot_challenge
+  - tu_van_size_giay
+  - do_chan
+  - hoi_thuong_hieu
+  - tim_kiem_giay
+  - chinh_sach_doi_tra
+  - phuong_thuc_thanh_toan
+  - thoi_gian_giao_hang
+
+entities:
+  - ten_giay
+  - mau_sac
+  - gia_min
+  - gia_max
+  - do_dai_chan
+  - thuong_hieu
+
+slots:
+  do_dai_chan:
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: from_entity
+      entity: do_dai_chan
+  ten_giay:
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: from_entity
+      entity: ten_giay
+  mau_sac:
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: from_entity
+      entity: mau_sac
+  gia_min:
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: from_entity
+      entity: gia_min
+  gia_max:
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: from_entity
+      entity: gia_max
+  thuong_hieu:
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: from_entity
+      entity: thuong_hieu
+  size_giay:
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: custom
+
+actions:
+  - action_tu_van_size_giay
+  - action_do_chan
+  - action_hoi_thuong_hieu
+  - action_tim_kiem_giay
+
+responses:
+  utter_greet:
+  - text: "👋 Xin chào! Tôi là Poly Shoes Assistant - trợ lý tư vấn giày thông minh của Poly Shoes. Tôi có thể giúp bạn:\n\n👟 Tư vấn size giày phù hợp\n📏 Hướng dẫn đo size chân\n🔍 Tìm kiếm giày theo sở thích\n🏢 Thông tin về các thương hiệu\n📦 Chính sách đổi trả & giao hàng\n\nBạn cần hỗ trợ gì?"
+
+  utter_goodbye:
+  - text: "Cảm ơn bạn đã tin dùng Poly Shoes! Chúc bạn tìm được đôi giày ưng ý! 👟👋"
+
+  utter_iamabot:
+  - text: "Tôi là chatbot tư vấn thông minh của Poly Shoes, chuyên tư vấn size giày và giúp bạn tìm kiếm sản phẩm giày dép phù hợp."
+
+  utter_chinh_sach_doi_tra:
+  - text: |
+      📦 **CHÍNH SÁCH ĐỔI TRẢ - POLY SHOES**
+      
+      ✅ **Điều kiện đổi trả:**
+      • Thời gian: Trong vòng 7 ngày kể từ ngày nhận hàng
+      • Sản phẩm còn nguyên tem, hộp, chưa qua sử dụng
+      • Có hóa đơn mua hàng
+      
+      🔄 **Quy trình đổi trả:**
+      1. Liên hệ hotline: 1900-xxxx
+      2. Gửi ảnh sản phẩm cần đổi
+      3. Chúng tôi sẽ đến lấy hàng miễn phí
+      4. Hoàn tiền hoặc đổi size trong 3-5 ngày
+      
+      💰 **Chi phí:**
+      • Lỗi từ nhà sản xuất: FREE hoàn toàn
+      • Đổi size/màu: FREE ship 2 chiều
+      • Không vừa ý: Bạn chịu phí ship về
+
+  utter_phuong_thuc_thanh_toan:
+  - text: |
+      💳 **PHƯƠNG THỨC THANH TOÁN**
+      
+      Poly Shoes hỗ trợ đa dạng hình thức thanh toán:
+      
+      🏪 **Tại cửa hàng:**
+      • Tiền mặt
+      • Quẹt thẻ (Visa, Mastercard, JCB)
+      • Quét mã QR (MoMo, ZaloPay, VNPay)
+      
+      🛒 **Mua hàng online:**
+      • COD (Thanh toán khi nhận hàng)
+      • Chuyển khoản ngân hàng
+      • Ví điện tử (MoMo, ZaloPay, VNPay)
+      • Thẻ tín dụng/ghi nợ
+      • Trả góp 0% (đơn từ 3 triệu)
+
+  utter_thoi_gian_giao_hang:
+  - text: |
+      🚚 **THỜI GIAN GIAO HÀNG**
+      
+      📍 **Nội thành Hà Nội, TP.HCM:**
+      • Giao hàng nhanh: 2-4 giờ
+      • Giao hàng tiêu chuẩn: 1-2 ngày
+      
+      📍 **Các tỉnh thành khác:**
+      • Miền Bắc: 2-3 ngày
+      • Miền Trung: 3-4 ngày  
+      • Miền Nam: 3-4 ngày
+      
+      📍 **Vùng xa, miền núi:**
+      • 4-7 ngày làm việc
+      
+      💵 **Phí ship:**
+      • FREE ship đơn từ 500k
+      • Dưới 500k: 20k-30k tùy khu vực
+      
+      ⏰ **Thời gian làm việc:**
+      • Thứ 2 - Thứ 7: 8h - 21h
+      • Chủ nhật: 9h - 18h
+
+  utter_default:
+  - text: |
+      ❓ **Xin lỗi, tôi chưa hiểu yêu cầu của bạn**
+      
+      Tôi có thể giúp bạn:
+      
+      👟 **Tư vấn size giày:**
+      • "Chân tôi dài 25cm nên mang size nào?"
+      • "Tư vấn size giày"
+      • "Size 40 dài bao nhiêu cm?"
+      
+      📏 **Hướng dẫn đo chân:**
+      • "Đo size chân như thế nào?"
+      • "Cách đo size giày"
+      
+      🔍 **Tìm kiếm giày:**
+      • "Tìm giày Nike màu đen"
+      • "Giày thể thao dưới 2 triệu"
+      • "Giày Adidas"
+      
+      🏢 **Thông tin thương hiệu:**
+      • "Có những thương hiệu gì?"
+      • "Giày Nike của Poly Shoes"
+      
+      📦 **Chính sách:**
+      • "Chính sách đổi trả"
+      • "Phương thức thanh toán"
+      • "Thời gian giao hàng"
+
+session_config:
+  session_expiration_time: 1440  # 24 hours
+  carry_over_slots_to_new_session: true  # Keep slots across sessions

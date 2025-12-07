@@ -1,0 +1,63 @@
+version: "3.1"
+
+stories:
+- story: chào hỏi đơn giản
+  steps:
+  - intent: greet
+  - action: utter_greet
+
+- story: tạm biệt
+  steps:
+  - intent: goodbye
+  - action: utter_goodbye
+
+- story: hỏi về bot
+  steps:
+  - intent: bot_challenge
+  - action: utter_iamabot
+
+- story: tư vấn size giày
+  steps:
+  - intent: tu_van_size_giay
+  - action: action_tu_van_size_giay
+
+- story: hướng dẫn đo chân
+  steps:
+  - intent: do_chan
+  - action: action_do_chan
+
+- story: hỏi về thương hiệu
+  steps:
+  - intent: hoi_thuong_hieu
+  - action: action_hoi_thuong_hieu
+
+- story: tìm kiếm giày
+  steps:
+  - intent: tim_kiem_giay
+  - action: action_tim_kiem_giay
+
+- story: hỏi chính sách đổi trả
+  steps:
+  - intent: chinh_sach_doi_tra
+  - action: utter_chinh_sach_doi_tra
+
+- story: hỏi phương thức thanh toán
+  steps:
+  - intent: phuong_thuc_thanh_toan
+  - action: utter_phuong_thuc_thanh_toan
+
+- story: hỏi thời gian giao hàng
+  steps:
+  - intent: thoi_gian_giao_hang
+  - action: utter_thoi_gian_giao_hang
+
+- story: flow tư vấn hoàn chỉnh
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: tu_van_size_giay
+  - action: action_tu_van_size_giay
+  - intent: tim_kiem_giay
+  - action: action_tim_kiem_giay
+  - intent: goodbye
+  - action: utter_goodbye

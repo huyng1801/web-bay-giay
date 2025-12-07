@@ -1,0 +1,37 @@
+version: "3.1"
+
+rules:
+- rule: Chào hỏi
+  steps:
+  - intent: greet
+  - action: utter_greet
+
+- rule: Tạm biệt
+  steps:
+  - intent: goodbye
+  - action: utter_goodbye
+
+- rule: Hỏi về bot
+  steps:
+  - intent: bot_challenge
+  - action: utter_iamabot
+
+- rule: Chính sách đổi trả
+  steps:
+  - intent: chinh_sach_doi_tra
+  - action: utter_chinh_sach_doi_tra
+
+- rule: Phương thức thanh toán
+  steps:
+  - intent: phuong_thuc_thanh_toan
+  - action: utter_phuong_thuc_thanh_toan
+
+- rule: Thời gian giao hàng
+  steps:
+  - intent: thoi_gian_giao_hang
+  - action: utter_thoi_gian_giao_hang
+
+- rule: Fallback khi không hiểu
+  steps:
+  - intent: nlu_fallback
+  - action: utter_default

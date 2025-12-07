@@ -1,0 +1,139 @@
+version: "3.1"
+
+nlu:
+- intent: greet
+  examples: |
+    - xin chào
+    - chào bạn
+    - hello
+    - hi
+    - chào shop
+    - chào poly shoes
+    - tôi muốn mua giày
+    - bắt đầu mua sắm
+    - chào bot
+
+- intent: goodbye
+  examples: |
+    - tạm biệt
+    - bye
+    - cảm ơn
+    - kết thúc
+    - hẹn gặp lại
+    - chào tạm biệt
+    - cảm ơn nhiều
+
+- intent: bot_challenge
+  examples: |
+    - bạn là ai?
+    - bạn là bot à?
+    - bạn là con người hay robot?
+    - bạn có phải chatbot không?
+    - bạn làm được gì?
+
+- intent: tu_van_size_giay
+  examples: |
+    - tư vấn size giày cho tôi
+    - chân tôi dài [25](do_dai_chan) nên mang size nào?
+    - chân [25cm](do_dai_chan) size giày nào?
+    - size giày cho chân dài [26](do_dai_chan)
+    - tư vấn size giày
+    - size giày
+    - giày size gì?
+    - chân dài [24.5](do_dai_chan) mang size nào?
+    - [25.5](do_dai_chan) size giày
+    - chân [26cm](do_dai_chan) nên mang size mấy?
+    - size [40](do_dai_chan) dài bao nhiêu cm?
+    - size [41](do_dai_chan) bao nhiêu cm?
+    - size [39](do_dai_chan) phù hợp với chân dài bao nhiêu?
+    - tôi mang size [42](do_dai_chan)
+    - chân [25.5cm](do_dai_chan) size nào?
+    - [24](do_dai_chan) size giày
+    - chân tôi dài [27](do_dai_chan)
+    - size giày cho chân [23.5](do_dai_chan)
+    - tư vấn mua giày
+    - giày size 40 vừa chân bao nhiêu cm?
+    - chân dài 25.5cm mang size mấy?
+
+- intent: do_chan
+  examples: |
+    - cách đo size chân
+    - đo size giày như thế nào?
+    - hướng dẫn đo chân
+    - làm sao đo size giày?
+    - đo chân để chọn size
+    - cách đo bàn chân
+    - đo size chân chính xác
+    - tôi muốn biết cách đo chân
+    - hướng dẫn đo size
+    - đo size giày ra sao?
+
+- intent: hoi_thuong_hieu
+  examples: |
+    - có những thương hiệu giày nào?
+    - shop bán giày hãng gì?
+    - có giày [Nike](thuong_hieu) không?
+    - có giày [Adidas](thuong_hieu) không?
+    - giày [Puma](thuong_hieu)
+    - giày [Converse](thuong_hieu)
+    - giày [Vans](thuong_hieu)
+    - giày [New Balance](thuong_hieu)
+    - có [Nike](thuong_hieu) không?
+    - [Adidas](thuong_hieu) có không?
+    - thương hiệu gì?
+    - các hãng giày
+    - poly shoes có giày gì?
+    - giày chính hãng nào?
+
+- intent: tim_kiem_giay
+  examples: |
+    - tìm giày [Nike](thuong_hieu)
+    - có giày màu [đen](mau_sac) không?
+    - tìm giày giá từ [500000](gia_min) đến [2000000](gia_max)
+    - tìm [giày thể thao](ten_giay)
+    - tìm [giày chạy bộ](ten_giay)
+    - [giày sneaker](ten_giay)
+    - tìm giày [Adidas](thuong_hieu) màu [trắng](mau_sac)
+    - giày dưới [1000000](gia_max)
+    - [giày boot](ten_giay)
+    - có [giày cao gót](ten_giay) không?
+    - tìm [giày casual](ten_giay)
+    - tìm giày [trắng](mau_sac)
+    - giày [đỏ](mau_sac)
+    - [giày tennis](ten_giay)
+    - [giày bóng rổ](ten_giay)
+    - tìm giày giá rẻ
+    - giày mới nhất
+    - giày bán chạy
+
+- intent: chinh_sach_doi_tra
+  examples: |
+    - chính sách đổi trả
+    - đổi trả như thế nào?
+    - có được đổi size không?
+    - đổi giày trong bao lâu?
+    - quy định đổi trả
+    - muốn đổi size giày
+    - chính sách bảo hành
+    - trả hàng
+
+- intent: phuong_thuc_thanh_toan
+  examples: |
+    - thanh toán như thế nào?
+    - phương thức thanh toán
+    - có COD không?
+    - thanh toán online
+    - có chuyển khoản không?
+    - trả tiền mặt được không?
+    - thanh toán thẻ
+    - ví điện tử
+
+- intent: thoi_gian_giao_hang
+  examples: |
+    - giao hàng bao lâu?
+    - thời gian giao hàng
+    - ship mất bao lâu?
+    - bao giờ nhận được hàng?
+    - giao hàng nhanh không?
+    - ship COD
+    - phí ship
