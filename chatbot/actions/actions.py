@@ -137,7 +137,7 @@ class ActionTuVanSizeGiay(Action):
     
     <div style="margin-top: 15px;">
         <p><strong>💡 Lưu ý:</strong> Nên đo chân vào buổi chiều vì chân có thể sưng nhẹ. Nếu chân nằm giữa 2 size, chọn size lớn hơn để thoải mái.</p>
-        <p><a href="http://localhost:3000/products" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">🛒 Xem giày tại Poly Shoes</a></p>
+        <p><a href="http://localhost:3000/product" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">🛒 Xem giày tại Poly Shoes</a></p>
     </div>
 </div>
                     """
@@ -204,7 +204,7 @@ class ActionTuVanSizeGiay(Action):
     </div>
     
     <div style="margin-top: 15px;">
-        <p><a href="http://localhost:3000/products" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🛒 Mua giày size {size_giay} tại Poly Shoes</a></p>
+        <p><a href="http://localhost:3000/product" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🛒 Mua giày size {size_giay} tại Poly Shoes</a></p>
     </div>
 </div>
             """
@@ -309,7 +309,7 @@ class ActionDoChan(Action):
     <div style="margin-top: 15px; text-align: center;">
         <p><strong>Sau khi đo xong, hãy hỏi tôi:</strong></p>
         <p style="color: #0066cc; font-size: 16px;">"Chân tôi dài 25cm nên mang size nào?"</p>
-        <p><a href="http://localhost:3000/products" target="_blank" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 10px;">🛒 Mua giày tại Poly Shoes</a></p>
+        <p><a href="http://localhost:3000/product" target="_blank" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 10px;">🛒 Mua giày tại Poly Shoes</a></p>
     </div>
 </div>
         """
@@ -346,7 +346,7 @@ class ActionHoiThuongHieu(Action):
     </div>
     
     <div style="margin-top: 15px;">
-        <p><a href="http://localhost:3000/products?brand={brand['name']}" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🛒 Xem giày {brand['name']}</a></p>
+        <p><a href="http://localhost:3000/product?brand={brand['name']}" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🛒 Xem giày {brand['name']}</a></p>
     </div>
 </div>
                     """
@@ -383,7 +383,7 @@ class ActionHoiThuongHieu(Action):
     </div>
     
     <div style="margin-top: 15px; text-align: center;">
-        <p><a href="http://localhost:3000/products" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🛒 Xem tất cả sản phẩm</a></p>
+        <p><a href="http://localhost:3000/product" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🛒 Xem tất cả sản phẩm</a></p>
     </div>
 </div>
         """
@@ -411,7 +411,7 @@ class ActionTimKiemGiay(Action):
         
         try:
             # Gọi API backend để tìm kiếm sản phẩm giày
-            api_url = f"{BACKEND_API_URL}/home/products"
+            api_url = f"{BACKEND_API_URL}/home/product"
             params = {}
             
             if ten_giay:
@@ -451,7 +451,7 @@ class ActionTimKiemGiay(Action):
             <h4 style="color: #007bff; margin-bottom: 10px;">👟 {i+1}. {product.get('productName', '')}</h4>
             {brand_html}
             <p><strong>💰 Giá:</strong> <span style="color: #28a745; font-size: 18px; font-weight: bold;">{product.get('sellingPrice', 0):,}đ</span> {discount_html}</p>
-            <a href="http://localhost:3000/products/{product.get('productId', '')}" target="_blank" style="background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 5px;">🛒 Xem chi tiết</a>
+            <a href="http://localhost:3000/product/{product.get('productId', '')}" target="_blank" style="background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 5px;">🛒 Xem chi tiết</a>
         </div>
 """
                         
@@ -463,7 +463,7 @@ class ActionTimKiemGiay(Action):
                             message += f"""
     <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
         <p>... và <strong>{len(filtered_products) - 5}</strong> đôi giày khác nữa!</p>
-        <a href="http://localhost:3000/products" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">🔗 Xem tất cả sản phẩm</a>
+        <a href="http://localhost:3000/product" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">🔗 Xem tất cả sản phẩm</a>
     </div>
 """
                         
@@ -485,7 +485,7 @@ class ActionTimKiemGiay(Action):
     </div>
     
     <div style="text-align: center; margin-top: 15px;">
-        <a href="http://localhost:3000/products" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🔗 Xem tất cả giày</a>
+        <a href="http://localhost:3000/product" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🔗 Xem tất cả giày</a>
     </div>
 </div>
                         """
@@ -494,7 +494,7 @@ class ActionTimKiemGiay(Action):
 <div class="no-products">
     <h3 style="color: #dc3545; margin-bottom: 15px;">❌ Không tìm thấy sản phẩm nào</h3>
     <div style="text-align: center;">
-        <a href="http://localhost:3000/products" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🔗 Xem tất cả giày tại Poly Shoes</a>
+        <a href="http://localhost:3000/product" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🔗 Xem tất cả giày tại Poly Shoes</a>
     </div>
 </div>
                     """
@@ -503,7 +503,7 @@ class ActionTimKiemGiay(Action):
 <div class="api-error">
     <h3 style="color: #dc3545;">❌ Không thể kết nối đến hệ thống</h3>
     <p>Mã lỗi: {response.status_code}</p>
-    <a href="http://localhost:3000/products" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🔗 Xem trực tiếp tại website</a>
+    <a href="http://localhost:3000/product" target="_blank" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">🔗 Xem trực tiếp tại website</a>
 </div>
                 """
             
@@ -511,11 +511,11 @@ class ActionTimKiemGiay(Action):
             return []
             
         except requests.exceptions.Timeout:
-            dispatcher.utter_message(text='<div style="color: #dc3545;"><h4>⏱️ Hết thời gian kết nối. Vui lòng thử lại sau.</h4><a href="http://localhost:3000/products" target="_blank">Xem sản phẩm trực tiếp</a></div>')
+            dispatcher.utter_message(text='<div style="color: #dc3545;"><h4>⏱️ Hết thời gian kết nối. Vui lòng thử lại sau.</h4><a href="http://localhost:3000/product" target="_blank">Xem sản phẩm trực tiếp</a></div>')
             return []
         except requests.exceptions.RequestException as e:
             logger.error(f"API request failed: {str(e)}")
-            dispatcher.utter_message(text=f'<div style="color: #dc3545;"><h4>❌ Không thể kết nối đến server. Vui lòng kiểm tra backend đang chạy.</h4><a href="http://localhost:3000/products" target="_blank">Xem sản phẩm trực tiếp</a></div>')
+            dispatcher.utter_message(text=f'<div style="color: #dc3545;"><h4>❌ Không thể kết nối đến server. Vui lòng kiểm tra backend đang chạy.</h4><a href="http://localhost:3000/product" target="_blank">Xem sản phẩm trực tiếp</a></div>')
             return []
         except Exception as e:
             logger.error(f"Error in action_tim_kiem_giay: {str(e)}")
