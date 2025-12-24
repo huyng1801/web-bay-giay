@@ -18,6 +18,7 @@ const OrderCard = ({
     onViewStatusHistory, 
     onCancelOrder,
     onFeedback,
+    customerFeedbacks = {},
     formatDate,
     loading 
 }) => {
@@ -246,6 +247,7 @@ const OrderCard = ({
                         orderId={order.orderId}
                         orderStatus={order.orderStatus}
                         onFeedback={onFeedback}
+                        customerFeedbacks={customerFeedbacks}
                     />
                 ))}
             </div>

@@ -528,8 +528,15 @@ const ProductDetails = () => {
         item.sizeId === selectedSizeId
     );
     if (existingIndex !== -1) {
-      // Nếu đã có thì cộng dồn số lượng
-      cart[existingIndex].quantity += quantity;
+      // Nếu đã có thì kiểm tra tổng số lượng không vượt quá kho
+      const newTotalQuantity = cart[existingIndex].quantity + quantity;
+      if (newTotalQuantity > selectedSize.stockQuantity) {
+        message.error(
+          `Chỉ có thể mua tối đa ${selectedSize.stockQuantity} sản phẩm này. Hiện tại đã có ${cart[existingIndex].quantity} trong giỏ.`
+        );
+        return;
+      }
+      cart[existingIndex].quantity = newTotalQuantity;
     } else {
       // Nếu chưa có thì thêm mới
       cart.push(cartItem);

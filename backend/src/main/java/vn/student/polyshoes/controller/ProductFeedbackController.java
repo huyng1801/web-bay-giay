@@ -12,14 +12,17 @@ import vn.student.polyshoes.service.ProductFeedbackService;
 
 import java.util.List;
 
+// Controller quản lý các API liên quan đến phản hồi sản phẩm (feedback)
 @RestController
 @RequestMapping("/feedback")
 public class ProductFeedbackController {
 
+    // Inject service xử lý logic liên quan đến ProductFeedback
     @Autowired
     private ProductFeedbackService productFeedbackService;
 
-    // Tạo feedback mới
+    // Tạo mới một phản hồi cho sản phẩm
+    // Trả về lỗi nếu dữ liệu không hợp lệ hoặc có lỗi hệ thống
     @PostMapping
     public ResponseEntity<ProductFeedbackResponse> createFeedback(@Valid @RequestBody ProductFeedbackDto feedbackDto) {
         try {
@@ -32,7 +35,7 @@ public class ProductFeedbackController {
         }
     }
 
-    // Lấy tất cả feedback
+    // Lấy tất cả phản hồi sản phẩm
     @GetMapping
     public ResponseEntity<List<ProductFeedbackResponse>> getAllFeedbacks() {
         try {
@@ -43,7 +46,7 @@ public class ProductFeedbackController {
         }
     }
 
-    // Lấy feedback theo sản phẩm
+    // Lấy danh sách phản hồi theo id sản phẩm
     @GetMapping("/product/{productId}")
     public ResponseEntity<List<ProductFeedbackResponse>> getFeedbacksByProduct(@PathVariable Integer productId) {
         try {
@@ -56,7 +59,7 @@ public class ProductFeedbackController {
         }
     }
 
-    // Lấy feedback theo khách hàng
+    // Lấy danh sách phản hồi theo id khách hàng
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<ProductFeedbackResponse>> getFeedbacksByCustomer(@PathVariable Integer customerId) {
         try {
@@ -69,7 +72,7 @@ public class ProductFeedbackController {
         }
     }
 
-    // Lấy rating trung bình của sản phẩm
+    // Lấy điểm đánh giá trung bình của sản phẩm
     @GetMapping("/product/{productId}/average-rating")
     public ResponseEntity<Double> getAverageRating(@PathVariable Integer productId) {
         try {
@@ -82,7 +85,7 @@ public class ProductFeedbackController {
         }
     }
 
-    // Lấy tổng số feedback của sản phẩm
+    // Lấy tổng số lượng phản hồi của sản phẩm
     @GetMapping("/product/{productId}/count")
     public ResponseEntity<Long> getFeedbackCount(@PathVariable Integer productId) {
         try {
@@ -95,7 +98,7 @@ public class ProductFeedbackController {
         }
     }
 
-    // Cập nhật feedback
+    // Cập nhật nội dung phản hồi sản phẩm
     @PutMapping("/{feedbackId}")
     public ResponseEntity<ProductFeedbackResponse> updateFeedback(
             @PathVariable Long feedbackId, 
@@ -110,7 +113,7 @@ public class ProductFeedbackController {
         }
     }
 
-    // Xóa feedback (soft delete)
+    // Xóa phản hồi sản phẩm (soft delete: chỉ đánh dấu đã xóa, không xóa khỏi DB)
     @DeleteMapping("/{feedbackId}")
     public ResponseEntity<Void> deleteFeedback(@PathVariable Long feedbackId) {
         try {

@@ -23,6 +23,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import vn.student.polyshoes.enums.Gender;
 
+/**
+ * Entity class đại diện cho Danh mục con của sản phẩm
+ * Mỗi danh mục con thuộc về một danh mục chính và có thể chứa nhiều sản phẩm
+ */
 @Entity
 @Table(name = "sub_category")
 @Data
@@ -30,32 +34,40 @@ import vn.student.polyshoes.enums.Gender;
 @AllArgsConstructor
 public class SubCategory {
 
+    // ID duy nhất của danh mục con, tự động tăng
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer subCategoryId;
 
+    // Tên danh mục con
     @Column(name = "sub_category_name", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
     private String subCategoryName;
 
+    // Giới tính mục tiêu (MALE, FEMALE, UNISEX)
     @Column(name = "gender", nullable = false)
     @Enumerated(EnumType.STRING)  
     private Gender gender;
 
+    // Trạng thái kích hoạt danh mục con
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    // Thời gian tạo danh mục con
     @Column(name = "created_at", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
 
+    // Thời gian cập nhật lần cuối
     @Column(name = "updated_at", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
+    // Danh mục chính mà danh mục con này thuộc về
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    // Danh sách các sản phẩm thuộc danh mục con này
     @OneToMany(mappedBy = "subCategory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Product> products;
 }

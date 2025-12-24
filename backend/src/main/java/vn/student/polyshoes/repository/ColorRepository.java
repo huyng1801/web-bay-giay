@@ -11,17 +11,21 @@ import vn.student.polyshoes.model.Color;
 
 import java.util.List;
 
+/**
+ * Repository interface để tương tác với dữ liệu Color trong database
+ * Cung cấp các phương thức tìm kiếm, lọc và quản lý màu sắc sản phẩm
+ */
 @Repository
 public interface ColorRepository extends JpaRepository<Color, Integer> {
     
-    // Tìm tất cả màu sắc đang hoạt động
+    // Lấy tất cả màu sắc đang hoạt động, sắp xếp theo tên từ A-Z
     List<Color> findByIsActiveTrueOrderByColorNameAsc();
     
-    // Tìm màu sắc theo tên
+    // Tìm kiếm màu sắc theo tên (không phân biệt chính xác)
     @Query("SELECT c FROM Color c WHERE c.colorName LIKE %:colorName% ORDER BY c.colorName ASC")
     List<Color> findByColorNameContaining(@Param("colorName") String colorName);
     
-    // Phân trang với tìm kiếm
+    // Lấy danh sách màu sắc với các bộ lọc và phân trang
     @Query("SELECT c FROM Color c WHERE " +
            "(:colorName IS NULL OR c.colorName LIKE %:colorName%) AND " +
            "(:isActive IS NULL OR c.isActive = :isActive)")
@@ -29,9 +33,9 @@ public interface ColorRepository extends JpaRepository<Color, Integer> {
                                @Param("isActive") Boolean isActive,
                                Pageable pageable);
     
-    // Kiểm tra tên màu đã tồn tại
+    // Kiểm tra tên màu sắc đã tồn tại (không phân biệt in/hoa thường)
     boolean existsByColorNameIgnoreCase(String colorName);
     
-    // Kiểm tra tên màu đã tồn tại (trừ ID hiện tại khi update)
+    // Kiểm tra tên màu sắc đã tồn tại (trừ ID hiện tại khi update)
     boolean existsByColorNameIgnoreCaseAndColorIdNot(String colorName, Integer colorId);
 }

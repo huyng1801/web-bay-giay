@@ -14,44 +14,54 @@ import java.util.Date;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Seeder dùng để khởi tạo dữ liệu màu sắc giày
+ * Tự động chạy khi ứng dụng khởi động nếu bảng color còn trống
+ */
 @Component
 @Configuration
 public class ColorDataSeeder {
 
     private static final Logger logger = LoggerFactory.getLogger(ColorDataSeeder.class);
 
+    /**
+     * Khởi tạo các màu sắc giày có sẵn
+     * @param colorRepository Repository dùng để lưu color
+     * @return CommandLineRunner thực thi khi ứng dụng khởi động
+     */
     @Bean
     CommandLineRunner seedColors(ColorRepository colorRepository) {
         return args -> {
-            if (colorRepository.count() == 0) { // Prevents duplicate entries
-                logger.info("Starting to seed shoe colors...");
+            if (colorRepository.count() == 0) { // Ngăn chặn tạo dữ liệu trùng lặp
+                logger.info("Bắt đầu khởi tạo dữ liệu màu sắc giày...");
 
-                // Colors used in shoes
+                // Danh sách các màu sắc giày phổ biến
                 List<String> shoeColors = Arrays.asList(
-                    "Đen",
-                    "Trắng",
-                    "Xanh navy",
-                    "Xam",
-                    "Nâu",
-                    "Đỏ",
-                    "Xanh dương",
-                    "Xanh lá",
-                    "Vàng",
-                    "Hồng",
-                    "Bạc",
-                    "Tím",
-                    "Cam",
-                    "Đen trắng",
-                    "Trắng xanh",
-                    "Trắng đỏ",
-                    "Trắng vàng",
-                    "Đen đỏ",
-                    "Đen xám",
-                    "Xám trắng",
-                    "Nâu đỏ",
-                    "Nâu sáng"
+                    "Đen",      // Màu cổ điển, phù hợp đa dạng
+                    "Trắng",    // Màu trung tính, tưới sáng
+                    "Xanh navy", // Màu đen xanh, chuyên nghiệp
+                    "Xam",      // Màu trung tính
+                    "Nâu",      // Màu ấm, phong cách casual
+                    "Đỏ",       // Màu nổi bật
+                    "Xanh dương",// Màu biển
+                    "Xanh lá",  // Màu tự nhiên
+                    "Vàng",     // Màu sáng, năng động
+                    "Hồng",     // Màu tưới vui
+                    "Bạc",      // Màu hiện đại, lạnh
+                    "Tím",      // Màu quý phái
+                    "Cam",      // Màu ấm áp
+                    "Đen trắng",// Tổ hợp màu cổ điển
+                    "Trắng xanh",// Tổ hợp màu sáng
+                    "Trắng đỏ", // Tổ hợp màu nổi bật
+                    "Trắng vàng",// Tổ hợp màu ấm
+                    "Đen đỏ",   // Tổ hợp màu mạnh mẽ
+                    "Đen xám",  // Tổ hợp màu trung tính
+                    "Xám trắng",// Tổ hợp màu nhẹ
+                    "Nâu đỏ",   // Tổ hợp màu ấm
+                    "Nâu sáng" // Tổ hợp màu tưới
                 );
 
+                // Lặp qua từng màu và lưu vào database
                 for (String colorName : shoeColors) {
                     Color color = new Color();
                     color.setColorName(colorName);
@@ -59,12 +69,12 @@ public class ColorDataSeeder {
                     color.setCreatedAt(new Date());
                     color.setUpdatedAt(new Date());
                     colorRepository.save(color);
-                    logger.debug("Created shoe color: {}", colorName);
+                    logger.debug("Đã tạo màu giày: {}", colorName);
                 }
 
-                logger.info("Successfully seeded {} shoe colors", shoeColors.size());
+                logger.info("Khởi tạo {} màu sắc giày thành công", shoeColors.size());
             } else {
-                logger.info("Colors already exist, skipping color seeding");
+                logger.info("Dữ liệu màu sắc đã tồn tại, bỏ qua khởi tạo");
             }
         };
     }

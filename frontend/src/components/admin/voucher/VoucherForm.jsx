@@ -184,6 +184,9 @@ const VoucherForm = ({
                                             }
                                             
                                             if (discountType === 'percentage') {
+                                                if (value > 50) {
+                                                    return Promise.reject(new Error('Giá trị giảm lớn, vui lòng kiểm tra lại! (tối đa 50%)'));
+                                                }
                                                 if (value > 100) {
                                                     return Promise.reject(new Error('Phần trăm giảm không được vượt quá 100%!'));
                                                 }

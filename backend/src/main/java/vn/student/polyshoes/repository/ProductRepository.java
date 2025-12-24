@@ -11,23 +11,29 @@ import org.springframework.transaction.annotation.Transactional;
 
 import vn.student.polyshoes.model.Product;
 
+/**
+ * Repository interface để tương tác với dữ liệu Product trong database
+ * Cung cấp các phương thức tìm kiếm, lọc và quản lý sản phẩm
+ */
 @Repository  
 public interface ProductRepository extends JpaRepository<Product, Integer>{
+     
+     // Tìm sản phẩm theo tên
      Optional<Product> findByProductName(String productName);
      
-     // Count active products by brand
+     // Đếm số sản phẩm đang hoạt động của một thương hiệu
      long countByBrandBrandIdAndIsActiveTrue(Integer brandId);
      
-     // Count active products by subcategory
+     // Đếm số sản phẩm đang hoạt động của một danh mục con
      long countBySubCategorySubCategoryIdAndIsActiveTrue(Integer subCategoryId);
      
-     // Deactivate all products by brand
+     // Vô hiệu hóa tất cả sản phẩm của một thương hiệu
      @Modifying
      @Transactional
      @Query("UPDATE Product p SET p.isActive = false WHERE p.brand.brandId = :brandId")
      void deactivateProductsByBrand(@Param("brandId") Integer brandId);
      
-     // Deactivate all products by subcategory
+     // Vô hiệu hóa tất cả sản phẩm của một danh mục con
      @Modifying
      @Transactional
      @Query("UPDATE Product p SET p.isActive = false WHERE p.subCategory.subCategoryId = :subCategoryId")

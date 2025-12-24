@@ -1,3 +1,6 @@
+
+// Seeder dùng để khởi tạo dữ liệu kích cỡ giày (Size)
+// Tự động chạy khi ứng dụng khởi động nếu bảng size còn trống
 package vn.student.polyshoes.seeder;
 
 import org.slf4j.Logger;
@@ -16,32 +19,45 @@ import java.util.List;
 
 @Component
 @Configuration
+
+/**
+ * Seeder khởi tạo danh sách kích cỡ giày tiêu chuẩn cho hệ thống
+ * Tạo các size từ 36 đến 46, trạng thái hoạt động
+ */
 public class SizeDataSeeder {
 
+    // Logger để ghi log quá trình seed dữ liệu
     private static final Logger logger = LoggerFactory.getLogger(SizeDataSeeder.class);
 
+    /**
+     * Khởi tạo dữ liệu kích cỡ giày
+     * @param sizeRepository Repository dùng để lưu kích cỡ
+     * @return CommandLineRunner thực thi khi ứng dụng khởi động
+     */
     @Bean
     CommandLineRunner seedSizes(SizeRepository sizeRepository) {
         return args -> {
-            if (sizeRepository.count() == 0) { // Prevents duplicate entries
-                logger.info("Starting to seed shoe sizes...");
+            // Nếu bảng size chưa có dữ liệu thì mới seed
+            if (sizeRepository.count() == 0) {
+                logger.info("Bắt đầu khởi tạo danh sách kích cỡ giày...");
 
-                // Shoe sizes
+                // Danh sách các kích cỡ giày tiêu chuẩn (từ 36 đến 46)
                 List<String> shoeSizes = Arrays.asList("36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46");
 
+                // Lặp qua từng kích cỡ và lưu vào database
                 for (String sizeValue : shoeSizes) {
                     Size size = new Size();
-                    size.setSizeValue(sizeValue);
-                    size.setIsActive(true);
-                    size.setCreatedAt(new Date());
-                    size.setUpdatedAt(new Date());
-                    sizeRepository.save(size);
-                    logger.debug("Created shoe size: {}", sizeValue);
+                    size.setSizeValue(sizeValue); // Gán giá trị size
+                    size.setIsActive(true); // Đánh dấu size đang hoạt động
+                    size.setCreatedAt(new Date()); // Thời gian tạo
+                    size.setUpdatedAt(new Date()); // Thời gian cập nhật
+                    sizeRepository.save(size); // Lưu vào database
+                    logger.debug("Đã tạo kích cỡ giày: {}", sizeValue);
                 }
 
-                logger.info("Successfully seeded {} shoe sizes", shoeSizes.size());
+                logger.info("Đã khởi tạo thành công {} kích cỡ giày", shoeSizes.size());
             } else {
-                logger.info("Sizes already exist, skipping size seeding");
+                logger.info("Dữ liệu kích cỡ đã tồn tại, bỏ qua seeding");
             }
         };
     }

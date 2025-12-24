@@ -1,3 +1,4 @@
+// Controller quản lý các chức năng liên quan đến màu sắc của sản phẩm
 package vn.student.polyshoes.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,18 +17,23 @@ import vn.student.polyshoes.util.ValidationUtils;
 
 import java.util.List;
 
+// Đánh dấu đây là REST controller, xử lý các API liên quan đến màu sắc sản phẩm
 @RestController
+// Định nghĩa đường dẫn gốc cho các API của controller này
 @RequestMapping("/product-colors")
 public class ProductColorController {
 
+    // Inject ProductColorService để xử lý logic liên quan đến màu sắc sản phẩm
     @Autowired
     private ProductColorService productColorService;
 
+    // Lấy danh sách tất cả màu sắc sản phẩm
     @GetMapping
     public ResponseEntity<List<ProductColorResponse>> getAllProductColors() {
         return ResponseEntity.ok(productColorService.findAll());
     }
 
+    // Tạo mới màu sắc sản phẩm
     @PostMapping
     public ResponseEntity<?> createProductColor(@ModelAttribute @Valid ProductColorDto productColorDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -43,6 +49,7 @@ public class ProductColorController {
         }
     }
 
+    // Cập nhật màu sắc sản phẩm theo id
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProductColor(@PathVariable Integer id, @ModelAttribute @Valid ProductColorDto productColorDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -60,6 +67,7 @@ public class ProductColorController {
         }
     }
 
+    // Xóa màu sắc sản phẩm theo id
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProductColor(@PathVariable Integer id) {
         try {
@@ -72,17 +80,20 @@ public class ProductColorController {
         }
     }
 
+    // Lấy danh sách màu sắc theo id sản phẩm
     @GetMapping("/product/{productId}")
     public ResponseEntity<List<ProductColorResponse>> findByProductId(@PathVariable Integer productId) {
         return ResponseEntity.ok(productColorService.findByProduct_ProductId(productId));
     }
 
+    // Lấy thông tin màu sắc sản phẩm theo id
     @GetMapping("/{id}")
     public ResponseEntity<ProductColorResponse> findProductColorById(@PathVariable Integer id) {
         ProductColorResponse response = productColorService.findById(id);
         return ResponseEntity.ok(response);
     }
 
+    // Đổi trạng thái hoạt động của màu sắc sản phẩm (ẩn/hiện)
     @PutMapping("/{id}/toggle-status")
     public ResponseEntity<?> toggleProductColorStatus(@PathVariable Integer id) {
         try {

@@ -1,26 +1,42 @@
 package vn.student.polyshoes.config;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+
+@Component
 public class VNPAYConfig {
-    public static String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    public static String vnp_Returnurl = "http://localhost:3000/vnpay-return";
-    public static String vnp_TmnCode = "CGXZLS0Z"; 
-    public static String vnp_HashSecret = "XNBCJFAKAZQSGTARRLGCHVZWCIOIGSHN"; 
-    public static String vnp_apiUrl = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
+    // URL thanh toán VNPAY
+    public static String vnp_PayUrl;
+    // URL trả về sau khi thanh toán
+    public static String vnp_Returnurl;
+    // Mã website VNPAY
+    public static String vnp_TmnCode;
+    // Khóa bí mật VNPAY
+    public static String vnp_HashSecret;
+    // API URL VNPAY
+    public static String vnp_apiUrl;
+
+    // Đọc cấu hình từ file properties
+    @Value("${vnpay.pay-url}")
+    public void setVnp_PayUrl(String url) { VNPAYConfig.vnp_PayUrl = url; }
+    @Value("${vnpay.return-url}")
+    public void setVnp_Returnurl(String url) { VNPAYConfig.vnp_Returnurl = url; }
+    @Value("${vnpay.tmn-code}")
+    public void setVnp_TmnCode(String code) { VNPAYConfig.vnp_TmnCode = code; }
+    @Value("${vnpay.hash-secret}")
+    public void setVnp_HashSecret(String secret) { VNPAYConfig.vnp_HashSecret = secret; }
+    @Value("${vnpay.api-url}")
+    public void setVnp_apiUrl(String url) { VNPAYConfig.vnp_apiUrl = url; }
 
 
+    // Tạo chuỗi hash cho dữ liệu gửi VNPAY
     public static String hashAllFields(Map fields) {
         List fieldNames = new ArrayList(fields.keySet());
         Collections.sort(fieldNames);
@@ -41,9 +57,9 @@ public class VNPAYConfig {
         return hmacSHA512(vnp_HashSecret,sb.toString());
     }
 
+    // Mã hóa HMAC SHA512
     public static String hmacSHA512(final String key, final String data) {
         try {
-
             if (key == null || data == null) {
                 throw new NullPointerException();
             }
@@ -58,12 +74,12 @@ public class VNPAYConfig {
                 sb.append(String.format("%02x", b & 0xff));
             }
             return sb.toString();
-
         } catch (Exception ex) {
             return "";
         }
     }
 
+    // Lấy địa chỉ IP client
     public static String getIpAddress(HttpServletRequest request) {
         String ipAdress;
         try {
@@ -77,6 +93,7 @@ public class VNPAYConfig {
         return ipAdress;
     }
 
+    // Tạo chuỗi số ngẫu nhiên
     public static String getRandomNumber(int len) {
         Random rnd = new Random();
         String chars = "0123456789";

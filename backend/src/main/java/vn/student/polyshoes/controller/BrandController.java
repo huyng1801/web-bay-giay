@@ -1,3 +1,4 @@
+// Controller quản lý các chức năng liên quan đến thương hiệu (brand)
 package vn.student.polyshoes.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,24 +23,30 @@ import vn.student.polyshoes.util.ValidationUtils;
 import java.io.IOException;
 import java.util.List;
 
+// Đánh dấu đây là REST controller, xử lý các API liên quan đến thương hiệu
 @RestController
+// Định nghĩa đường dẫn gốc cho các API của controller này
 @RequestMapping("/brands")
 public class BrandController {
 
+    // Inject BrandService để xử lý logic liên quan đến thương hiệu
     @Autowired
     private BrandService brandService;
 
+    // Lấy danh sách tất cả thương hiệu
     @GetMapping
     public ResponseEntity<List<Brand>> getAllBrands() {
         return ResponseEntity.ok(brandService.getAllBrands());
     }
 
+    // Lấy thông tin thương hiệu theo id
     @GetMapping("/{id}")
     public ResponseEntity<Brand> getBrandById(@PathVariable Integer id) {
         Brand brand = brandService.getBrandById(id);
         return ResponseEntity.ok(brand);
     }
 
+    // Tạo mới một thương hiệu
     @PostMapping
     public ResponseEntity<?> createBrand(@ModelAttribute @Valid BrandDto brandDto, BindingResult result) throws IOException {
         if (result.hasErrors()) {
@@ -49,6 +56,7 @@ public class BrandController {
         return ResponseEntity.status(HttpStatus.CREATED).body(brand);
     }
 
+    // Cập nhật thông tin thương hiệu theo id
     @PutMapping("/{id}")
     public ResponseEntity<?> updateBrand(@PathVariable Integer id, @ModelAttribute @Valid BrandDto brandDto, BindingResult result) throws IOException {
         if (result.hasErrors()) {
@@ -57,17 +65,19 @@ public class BrandController {
         Brand brand = brandService.updateBrand(id, brandDto);
         return ResponseEntity.ok(brand);
     }
-    // Helper: handle bad request with validation errors
+    // Hàm hỗ trợ: trả về lỗi khi validate dữ liệu
     private ResponseEntity<?> badRequest(BindingResult result) {
         return ResponseEntity.badRequest().body(ValidationUtils.getErrorMessages(result));
     }
 
+    // Xóa thương hiệu theo id
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBrand(@PathVariable Integer id) {
         brandService.deleteBrand(id);
         return ResponseEntity.noContent().build();
     }
 
+    // Đổi trạng thái hoạt động của thương hiệu (ẩn/hiện)
     @PutMapping("/{id}/toggle-status")
     public ResponseEntity<?> toggleBrandStatus(@PathVariable Integer id) {
         try {

@@ -1,3 +1,4 @@
+// Controller quản lý các chức năng liên quan đến màu sắc sản phẩm
 package vn.student.polyshoes.controller;
 
 import jakarta.validation.Valid;
@@ -14,41 +15,43 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Đánh dấu đây là REST controller, xử lý các API liên quan đến màu sắc
 @RestController
+// Định nghĩa đường dẫn gốc cho các API của controller này
 @RequestMapping("/colors")
 public class ColorController {
     
+    // Inject ColorService để xử lý logic liên quan đến màu sắc
     @Autowired
     private ColorService colorService;
     
-    // Lấy tất cả màu sắc
+    // Lấy danh sách tất cả màu sắc
     @GetMapping
     public ResponseEntity<List<ColorResponse>> getAllColors() {
         List<ColorResponse> colors = colorService.getAllColors();
         return ResponseEntity.ok(colors);
     }
     
-    // Lấy tất cả màu sắc đang hoạt động (cho dropdown)
+    // Lấy danh sách màu sắc đang hoạt động (dùng cho dropdown)
     @GetMapping("/active")
     public ResponseEntity<List<ColorResponse>> getActiveColors() {
         List<ColorResponse> colors = colorService.getActiveColors();
         return ResponseEntity.ok(colors);
     }
     
-    // Phân trang với tìm kiếm
+    // Phân trang và tìm kiếm màu sắc
     @GetMapping("/page")
     public ResponseEntity<Page<ColorResponse>> getColorsWithPagination(
             @RequestParam(required = false) String colorName,
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
         Pageable pageable = PageRequest.of(page, size);
         Page<ColorResponse> colorPage = colorService.getColorsWithFilters(colorName, isActive, pageable);
         return ResponseEntity.ok(colorPage);
     }
     
-    // Lấy màu sắc theo ID
+    // Lấy thông tin màu sắc theo id
     @GetMapping("/{id}")
     public ResponseEntity<ColorResponse> getColorById(@PathVariable Integer id) {
         return colorService.getColorById(id)
@@ -56,7 +59,7 @@ public class ColorController {
                 .orElse(ResponseEntity.notFound().build());
     }
     
-    // Tạo màu sắc mới
+    // Tạo mới một màu sắc
     @PostMapping
     public ResponseEntity<?> createColor(@Valid @RequestBody ColorDto requestDTO) {
         try {
@@ -67,7 +70,7 @@ public class ColorController {
         }
     }
     
-    // Cập nhật màu sắc
+    // Cập nhật thông tin màu sắc theo id
     @PutMapping("/{id}")
     public ResponseEntity<?> updateColor(@PathVariable Integer id, 
                                         @Valid @RequestBody ColorDto requestDTO) {
@@ -79,7 +82,7 @@ public class ColorController {
         }
     }
     
-    // Xóa màu sắc
+    // Xóa màu sắc theo id
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteColor(@PathVariable Integer id) {
         try {

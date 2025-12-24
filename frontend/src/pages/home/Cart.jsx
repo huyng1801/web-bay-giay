@@ -565,7 +565,7 @@ const Cart = () => {
                                                             <span style={styles.quantityLabel}>Số lượng:</span>
                                                             <InputNumber
                                                                 min={1}
-                                                                max={10}
+                                                                max={details.stockQuantity || 1}
                                                                 value={item.quantity}
                                                                 onChange={(value) => handleQuantityChange(index, value)}
                                                                 style={styles.quantityInput}

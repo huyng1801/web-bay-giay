@@ -9,54 +9,69 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
+// DTO dùng để nhận dữ liệu tạo mới hoặc cập nhật voucher khuyến mãi
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class VoucherDto {
+    // ID của voucher (nếu cập nhật)
     private Long voucherId;
 
+    // Mã code của voucher (bắt buộc, không được để trống)
     @NotBlank(message = "Voucher code must not be blank")
     private String code;
 
+    // Tên voucher (bắt buộc)
     @NotBlank(message = "Voucher name must not be blank")
     private String name;
 
+    // Mô tả chi tiết voucher (tùy chọn)
     private String description;
 
+    // Loại giảm giá (theo phần trăm hoặc số tiền cố định)
     @NotNull(message = "Discount type must not be null")
     private Voucher.DiscountType discountType;
 
+    // Giá trị giảm giá (bắt buộc, > 0)
     @NotNull(message = "Discount value must not be null")
     @Positive(message = "Discount value must be greater than 0")
     private Double discountValue;
 
+    // Số tiền giảm tối đa (nếu có, >= 0)
     @PositiveOrZero(message = "Max discount must be zero or positive")
     private Double maxDiscount;
 
+    // Giá trị đơn hàng tối thiểu để áp dụng voucher (>= 0)
     @PositiveOrZero(message = "Minimum order value must be zero or positive")
     private Double minOrderValue;
 
+    // Loại điều kiện áp dụng voucher (VD: theo giá trị đơn hàng, số lượng sản phẩm...)
     @NotNull(message = "Condition type must not be null")
     private Voucher.ConditionType conditionType;
 
+    // Giá trị điều kiện áp dụng (>= 0)
     @PositiveOrZero(message = "Condition value must be zero or positive")
     private Double conditionValue;
 
+    // Ngày bắt đầu hiệu lực của voucher
     @NotNull(message = "Start date must not be null")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate startDate;
 
+    // Ngày kết thúc hiệu lực của voucher
     @NotNull(message = "End date must not be null")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate endDate;
 
+    // Số lượt sử dụng tối đa (>= 0, null = không giới hạn)
     @PositiveOrZero(message = "Usage limit must be zero or positive")
     private Integer usageLimit;
 
+    // Số lượt đã sử dụng (>= 0)
     @PositiveOrZero(message = "Used count must be zero or positive")
     private Integer usedCount;
 
-    // Constructor from entity
+    // Hàm khởi tạo từ entity Voucher
     public VoucherDto(Voucher voucher) {
         this.voucherId = voucher.getVoucherId();
         this.code = voucher.getCode();
@@ -74,7 +89,7 @@ public class VoucherDto {
         this.usedCount = voucher.getUsedCount();
     }
 
-    // Convert to entity
+    // Chuyển đổi về entity Voucher
     public Voucher toEntity() {
         Voucher voucher = new Voucher();
         voucher.setVoucherId(this.voucherId);
@@ -94,7 +109,7 @@ public class VoucherDto {
         return voucher;
     }
     
-    // Custom validation method - to be called before save
+    // Hàm kiểm tra logic nghiệp vụ voucher trước khi lưu
     public void validateVoucherRules() {
         if (discountType == Voucher.DiscountType.FIXED && 
             maxDiscount != null && minOrderValue != null && 

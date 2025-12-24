@@ -197,6 +197,7 @@ const Product = () => {
   const urlSubCategoryId = searchParams.get('subCategoryId');
   const urlSubCategoryName = searchParams.get('subCategoryName');
   const urlBrand = searchParams.get('brand');
+  const urlProductName = searchParams.get('productName');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -231,6 +232,9 @@ const Product = () => {
           const brand = uniqueBrands.find(b => b.name.toLowerCase() === urlBrand.toLowerCase());
           if (brand) setSelectedBrands([brand.id]);
         }
+        if (urlProductName) {
+          setSearchQuery(decodeURIComponent(urlProductName));
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Không thể tải dữ liệu sản phẩm. Vui lòng thử lại.');
@@ -240,7 +244,7 @@ const Product = () => {
     };
 
     fetchData();
-  }, [urlSubCategoryId, urlBrand]);
+  }, [urlSubCategoryId, urlBrand, urlProductName]);
 
   const filteredProducts = products.filter(product => {
     const productName = product.productName || '';
@@ -410,7 +414,6 @@ const Product = () => {
 
               {/* Category Filter */}
               <div style={styles.sidebarSection}>
-                <div style={styles.sidebarTitle}>Danh Mục</div>
                 <SubCategoryFilter
                   subCategories={subCategories}
                   selectedSubCategories={selectedSubCategories}
@@ -430,7 +433,6 @@ const Product = () => {
 
               {/* Price Filter */}
               <div style={styles.sidebarSection}>
-                <div style={styles.sidebarTitle}>Giá</div>
                 <PriceFilter onPriceChange={setPriceRange} />
               </div>
             </div>

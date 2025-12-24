@@ -1,3 +1,4 @@
+// Controller quản lý các chức năng liên quan đến banner
 package vn.student.polyshoes.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,24 +23,30 @@ import vn.student.polyshoes.util.ValidationUtils;
 
 import java.util.List;
 
+// Đánh dấu đây là REST controller, xử lý các API liên quan đến banner
 @RestController
+// Định nghĩa đường dẫn gốc cho các API của controller này
 @RequestMapping("/banners")
 public class BannerController {
 
+    // Inject BannerService để xử lý logic liên quan đến banner
     @Autowired
     private BannerService bannerService;
 
+    // Lấy danh sách tất cả banner
     @GetMapping
     public ResponseEntity<List<Banner>> getAllBanners() {
         return ResponseEntity.ok(bannerService.getAllBanners());
     }
 
+    // Lấy thông tin banner theo id
     @GetMapping("/{id}")
     public ResponseEntity<Banner> getBannerById(@PathVariable Integer id) {
         Banner banner = getBannerOrThrow(id);
         return ResponseEntity.ok(banner);
     }
 
+    // Tạo mới một banner
     @PostMapping
     public ResponseEntity<?> createBanner(@ModelAttribute @Valid BannerDto bannerDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -49,6 +56,7 @@ public class BannerController {
         return ResponseEntity.status(HttpStatus.CREATED).body(banner);
     }
 
+    // Cập nhật thông tin banner theo id
     @PutMapping("/{id}")
     public ResponseEntity<?> updateBanner(@PathVariable Integer id, @ModelAttribute @Valid BannerDto bannerDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -56,11 +64,12 @@ public class BannerController {
         }
         Banner banner = bannerService.updateBanner(id, bannerDto);
         if (banner == null) {
-            throw new ResourceNotFoundException("Banner with ID " + id + " not found");
+            throw new ResourceNotFoundException("Banner với ID " + id + " không tồn tại");
         }
         return ResponseEntity.ok(banner);
     }
 
+    // Xóa banner theo id
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBanner(@PathVariable Integer id) {
         getBannerOrThrow(id);
@@ -68,20 +77,21 @@ public class BannerController {
         return ResponseEntity.noContent().build();
     }
 
-    // Helper: get banner or throw not found
+    // Hàm hỗ trợ: lấy banner theo id hoặc báo lỗi không tìm thấy
     private Banner getBannerOrThrow(Integer id) {
         Banner banner = bannerService.getBannerById(id);
         if (banner == null) {
-            throw new ResourceNotFoundException("Banner with ID " + id + " not found");
+            throw new ResourceNotFoundException("Banner với ID " + id + " không tồn tại");
         }
         return banner;
     }
 
-    // Helper: handle bad request with validation errors
+    // Hàm hỗ trợ: trả về lỗi khi validate dữ liệu
     private ResponseEntity<?> badRequest(BindingResult result) {
         return ResponseEntity.badRequest().body(ValidationUtils.getErrorMessages(result));
     }
 
+    // Đổi trạng thái hoạt động của banner (ẩn/hiện)
     @PutMapping("/{id}/toggle-status")
     public ResponseEntity<?> toggleBannerStatus(@PathVariable Integer id) {
         try {

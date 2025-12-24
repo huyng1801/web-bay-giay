@@ -1,4 +1,5 @@
 
+// Controller xử lý các chức năng trang chủ, sản phẩm, đơn hàng, khách hàng, voucher, shipping...
 package vn.student.polyshoes.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,11 +55,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// Đánh dấu đây là REST controller, xử lý các API liên quan đến trang chủ
 @RestController
+// Định nghĩa đường dẫn gốc cho các API của controller này
 @RequestMapping("/home/")
 public class HomeController {
 
-    // Services
+    // Inject các service xử lý logic cho từng chức năng
     @Autowired
     private BannerService bannerService;
     @Autowired
@@ -88,18 +91,21 @@ public class HomeController {
     @Autowired
     private HomeService homeService;
 
-    // ========== BANNER ENDPOINTS ==========
+    // ========== API banner ========== 
+    // Lấy danh sách banner
     @GetMapping("banners")
     public ResponseEntity<List<Banner>> getAllBanners() {
         return ResponseEntity.ok(bannerService.getAllBanners());
     }
 
-    // ========== CATEGORY & SUBCATEGORY ENDPOINTS ==========
+    // ========== API danh mục & danh mục con ========== 
+    // Lấy danh sách danh mục
     @GetMapping("categories")
     public ResponseEntity<List<CategoryResponse>> getAllCategories() {
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
+    // Lấy danh sách danh mục con theo categoryId và giới tính
     @GetMapping("subcategories")
     public ResponseEntity<List<SubCategoryResponse>> getSubCategories(
             @RequestParam(value = "categoryId", required = false) Integer categoryId,
@@ -107,19 +113,21 @@ public class HomeController {
         return ResponseEntity.ok(subCategoryService.getSubCategories(categoryId, gender));
     }
 
-    // ========== PRODUCT ENDPOINTS ==========
-    @GetMapping("products")
-    public ResponseEntity<List<ProductResponse>> getAllProducts(
+    // ========== API sản phẩm ========== 
+        // Lấy danh sách sản phẩm theo bộ lọc
+        @GetMapping("products")
+        public ResponseEntity<List<ProductResponse>> getAllProducts(
             @RequestParam(required = false) Integer subCategoryId,
             @RequestParam(required = false) Gender gender,
             @RequestParam(required = false) String productName) {
         List<ProductResponse> productResponses = productService.getAllProducts(subCategoryId, gender, productName);
         List<ProductResponse> activeProducts = productResponses.stream()
-                .filter(product -> product.getIsActive() != null && product.getIsActive())
-                .collect(Collectors.toList());
+            .filter(product -> product.getIsActive() != null && product.getIsActive())
+            .collect(Collectors.toList());
         return ResponseEntity.ok(activeProducts);
-    }
+        }
 
+    // Lấy thông tin sản phẩm theo id
     @GetMapping("product/{id}")
     public ResponseEntity<ProductResponse> getProductById(@PathVariable("id") Integer productId) {
         ProductResponse productResponse = productService.getProductById(productId);
@@ -129,22 +137,26 @@ public class HomeController {
         return ResponseEntity.ok(productResponse);
     }
 
+    // Lấy danh sách màu sắc của sản phẩm
     @GetMapping("product-color/{productId}")
     public ResponseEntity<List<ProductColorResponse>> findByProductId(@PathVariable Integer productId) {
         return ResponseEntity.ok(productColorService.findByProduct_ProductId(productId));
     }
 
+    // Lấy danh sách size của màu sắc sản phẩm
     @GetMapping("product-size/product-color/{productColorId}")
     public ResponseEntity<List<ProductSizeResponse>> findByProductColorId(@PathVariable Integer productColorId) {
         return ResponseEntity.ok(productSizeService.findByProductColorId(productColorId));
     }
 
+    // Lấy danh sách hình ảnh của màu sắc sản phẩm
     @GetMapping("product-image/product-color/{productColorId}")
     public ResponseEntity<List<ProductColorImageResponse>> getImagesByProductColorId(@PathVariable Integer productColorId) {
         return ResponseEntity.ok(productColorImageService.findByProductColorId(productColorId));
     }
 
-    // ========== PRODUCT FEEDBACK ENDPOINTS ==========
+    // ========== API đánh giá sản phẩm ========== 
+    // Tạo đánh giá cho sản phẩm
     @PostMapping("feedback")
     public ResponseEntity<ProductFeedbackResponse> createProductFeedback(@RequestBody ProductFeedbackDto feedbackDto) {
         try {
@@ -155,6 +167,7 @@ public class HomeController {
         }
     }
 
+    // Lấy danh sách đánh giá theo sản phẩm
     @GetMapping("feedback/product/{productId}")
     public ResponseEntity<List<ProductFeedbackResponse>> getFeedbacksByProduct(@PathVariable Integer productId) {
         try {
@@ -165,7 +178,21 @@ public class HomeController {
         }
     }
 
-    // Get top reviews for home page
+    // Get feedbacks by customer and order
+    // Lấy đánh giá theo khách hàng và đơn hàng
+    @GetMapping("feedback/customer/{customerId}/order/{orderId}")
+    public ResponseEntity<List<ProductFeedbackResponse>> getFeedbacksByCustomerAndOrder(
+            @PathVariable Integer customerId, 
+            @PathVariable String orderId) {
+        try {
+            List<ProductFeedbackResponse> feedbacks = productFeedbackService.getFeedbacksByCustomerAndOrder(customerId, orderId);
+            return ResponseEntity.ok(feedbacks);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    // Lấy top đánh giá nổi bật cho trang chủ
     @GetMapping("reviews/top")
     public ResponseEntity<List<ProductFeedbackResponse>> getTopReviews(
             @RequestParam(value = "limit", defaultValue = "4") int limit) {
@@ -177,7 +204,8 @@ public class HomeController {
         }
     }
 
-    // ========== ORDER ENDPOINTS ==========
+    // ========== API đơn hàng ========== 
+    // Tạo mới đơn hàng
     @PostMapping("orders")
     public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequestDto orderRequestDto) {
         GuestDto guestDto = orderRequestDto.getGuestDto();
@@ -188,6 +216,7 @@ public class HomeController {
         return ResponseEntity.ok(orderResponse);
     }
 
+    // Lấy danh sách đơn hàng theo id khách hàng
     @GetMapping("orders/customer/{customerId}")
     public ResponseEntity<List<OrderResponse>> getOrdersByCustomerId(@PathVariable Integer customerId) {
         try {
@@ -198,6 +227,7 @@ public class HomeController {
         }
     }
 
+    // Lấy lịch sử trạng thái đơn hàng
     @GetMapping("orders/{orderId}/history")
     public ResponseEntity<?> getOrderStatusHistory(@PathVariable String orderId) {
         try {
@@ -217,13 +247,15 @@ public class HomeController {
         }
     }
 
-    // ========== PAYMENT (VNPAY) ENDPOINTS ==========
+    // ========== API thanh toán VNPAY ========== 
+    // Tạo url thanh toán VNPAY cho đơn hàng
     @PostMapping("vnpay-payment")
     public ResponseEntity<?> createVNPayPayment(@RequestParam String orderId, @RequestParam long amount) {
         String paymentUrl = orderService.createVNPayPaymentUrl(orderId, amount);
         return ResponseEntity.ok(paymentUrl);
     }
 
+    // Xử lý kết quả trả về từ VNPAY
     @GetMapping("vnpay-return")
     public ResponseEntity<String> vnpayReturn(@RequestParam Map<String, String> params) {
         String orderId = params.get("vnp_TxnRef");
@@ -236,7 +268,8 @@ public class HomeController {
         }
     }
 
-    // ========== VOUCHER ENDPOINTS ==========
+    // ========== API voucher ========== 
+    // Lấy danh sách voucher khả dụng cho khách hàng
     @GetMapping("vouchers/available")
     public ResponseEntity<List<Voucher>> getAvailableVouchers(
             @RequestParam Integer customerId,
@@ -249,6 +282,7 @@ public class HomeController {
         }
     }
 
+    // Kiểm tra tính hợp lệ của voucher
     @PostMapping("vouchers/validate")
     public ResponseEntity<HomeService.VoucherValidationResult> validateVoucher(
             @RequestBody Map<String, Object> request) {
@@ -264,6 +298,7 @@ public class HomeController {
         }
     }
 
+    // Áp dụng voucher cho đơn hàng (chỉ kiểm tra, chưa lưu)
     @PostMapping("vouchers/apply")
     public ResponseEntity<Map<String, Object>> applyVoucherForValidation(
             @RequestBody Map<String, Object> request) {
@@ -292,20 +327,22 @@ public class HomeController {
         }
     }
 
+    // Áp dụng voucher cho đơn hàng (lưu vào DB)
     @PostMapping("vouchers/apply-to-order")
     public ResponseEntity<String> applyVoucherToOrder(
             @RequestParam String code,
             @RequestParam Integer customerId,
             @RequestParam String orderId) {
         try {
-            voucherService.applyVoucher(code, customerId, orderId);
+            voucherService.applyVoucherToOrder(code, customerId, orderId);
             return ResponseEntity.ok("Voucher đã được áp dụng thành công");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // ========== CUSTOMER ENDPOINTS ==========
+    // ========== API khách hàng ========== 
+    // Đăng ký tài khoản khách hàng
     @PostMapping("register")
     public ResponseEntity<Customer> register(@RequestBody RegisterDto registerDto) {
         try {
@@ -316,6 +353,7 @@ public class HomeController {
         }
     }
 
+    // Đăng nhập khách hàng
     @PostMapping("login")
     public ResponseEntity<String> login(@RequestBody LoginUserDto loginDto) {
         try {
@@ -326,6 +364,7 @@ public class HomeController {
         }
     }
 
+    // Lấy thông tin khách hàng theo id
     @GetMapping("customer/{customerId}")
     public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable Integer customerId) {
         Customer customer = customerService.getCustomerById(customerId);
@@ -335,6 +374,7 @@ public class HomeController {
         return ResponseEntity.ok(toCustomerResponse(customer));
     }
 
+    // Lấy thông tin khách hàng theo email
     @GetMapping("customer/email/{email}")
     public ResponseEntity<CustomerResponse> getCustomerByEmail(@PathVariable("email") String email) {
         Customer customer = customerService.getCustomerByEmail(email);
@@ -344,7 +384,8 @@ public class HomeController {
         return ResponseEntity.ok(toCustomerResponse(customer));
     }
 
-    // ========== SHIPPING ENDPOINTS ==========
+    // ========== API shipping ========== 
+    // Lấy danh sách shipping đang hoạt động
     @GetMapping("shippings/active")
     public ResponseEntity<List<ShippingDto>> getActiveShippings() {
         try {
@@ -355,6 +396,7 @@ public class HomeController {
         }
     }
 
+    // Lấy danh sách shipping theo loại
     @GetMapping("shippings/type/{shippingType}")
     public ResponseEntity<List<ShippingDto>> getShippingsByType(@PathVariable String shippingType) {
         try {
@@ -366,7 +408,7 @@ public class HomeController {
         }
     }
 
-    // ========== HELPER METHODS ==========
+    // Hàm hỗ trợ: chuyển đổi từ Customer sang CustomerResponse
     private CustomerResponse toCustomerResponse(Customer customer) {
         return new CustomerResponse(
                 customer.getCustomerId(),
@@ -379,21 +421,21 @@ public class HomeController {
                 customer.getIsActive()
         );
     }
-    // ========== ORDER CANCEL ENDPOINT ========== 
+    // ========== API huỷ đơn hàng ========== 
 
+    // Huỷ đơn hàng cho khách hàng
     @PostMapping("order/{orderId}/cancel")
     public ResponseEntity<OrderResponse> cancelOrderForCustomer(
             @PathVariable String orderId,
             @RequestParam(required = true) Integer customerId,
             @RequestBody(required = false) Map<String, String> body) {
-        // Validate input parameters
+        // Kiểm tra tham số đầu vào
         if (orderId == null || orderId.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(null);
         }
         if (customerId == null) {
             return ResponseEntity.badRequest().body(null);
         }
-        
         String cancelReason = body != null ? body.getOrDefault("cancelReason", null) : null;
         try {
             // Lấy tên khách hàng để ghi lịch sử

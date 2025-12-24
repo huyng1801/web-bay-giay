@@ -9,7 +9,6 @@ import vn.student.polyshoes.config.VNPAYConfig;
 import vn.student.polyshoes.dto.GuestDto;
 import vn.student.polyshoes.dto.OrderDto;
 import vn.student.polyshoes.dto.OrderFilterDto;
-import vn.student.polyshoes.dto.OrderFilterResponse;
 import vn.student.polyshoes.dto.OrderItemDto;
 import vn.student.polyshoes.dto.ShippingDto;
 import vn.student.polyshoes.enums.OrderStatus;
@@ -21,14 +20,13 @@ import vn.student.polyshoes.model.OrderItem;
 import vn.student.polyshoes.model.ProductColor;
 import vn.student.polyshoes.model.ProductSize;
 import vn.student.polyshoes.model.Shipping;
-import vn.student.polyshoes.model.VoucherUsage;
 import vn.student.polyshoes.repository.CustomerRepository;
 import vn.student.polyshoes.repository.GuestRepository;
 import vn.student.polyshoes.repository.OrderItemRepository;
 import vn.student.polyshoes.repository.OrderRepository;
 import vn.student.polyshoes.repository.ProductColorImageRepository;
 import vn.student.polyshoes.repository.ProductSizeRepository;
-import vn.student.polyshoes.repository.VoucherUsageRepository;
+import vn.student.polyshoes.response.OrderFilterResponse;
 import vn.student.polyshoes.response.OrderItemResponse;
 import vn.student.polyshoes.response.OrderResponse;
 
@@ -84,9 +82,6 @@ public class OrderService {
     
     @Autowired
     private vn.student.polyshoes.repository.AdminUserRepository adminUserRepository;
-    
-    @Autowired
-    private VoucherUsageRepository voucherUsageRepository;
 
     @Transactional
     public OrderResponse createOrder(int customerId, GuestDto guestDto, OrderDto orderDto,
@@ -262,7 +257,8 @@ public class OrderService {
                                  " for customer ID: " + voucherCustomerId + 
                                  " on order: " + savedOrder.getOrderId());
                 
-                voucherService.applyVoucher(orderDto.getVoucherCode(), voucherCustomerId, savedOrder.getOrderId());
+                // Sử dụng method mới không tạo VoucherUsage
+                voucherService.applyVoucherToOrder(orderDto.getVoucherCode(), voucherCustomerId, savedOrder.getOrderId());
                 System.out.println("Voucher applied successfully!");
             } catch (Exception e) {
                 System.err.println("Lỗi khi sử dụng voucher: " + e.getMessage());
@@ -308,7 +304,7 @@ public class OrderService {
             orderResponse.setTotalPrice(savedOrder.getTotalPrice());
             orderResponse.setOriginalPrice(savedOrder.getOriginalPrice());
             orderResponse.setVoucherDiscount(savedOrder.getVoucherDiscount());
-            // Get voucher code from VoucherUsage relationship
+            // Lấy mã voucher từ Order entity
             orderResponse.setVoucherCode(getVoucherCodeByOrderId(savedOrder.getOrderId()));
             orderResponse.setOrderStatus(savedOrder.getOrderStatus());
 
@@ -1106,19 +1102,26 @@ public class OrderService {
     }
     
     /**
-     * Get voucher code for an order from VoucherUsage relationship
-     * @param orderId the order ID
-     * @return voucher code if found, null otherwise
+     * Lấy mã voucher cho đơn hàng từ Order entity
+     * @param orderId ID đơn hàng
+     * @return mã voucher nếu tìm thấy, null nếu không
      */
     private String getVoucherCodeByOrderId(String orderId) {
         try {
-            return voucherUsageRepository.findByOrderId(orderId)
-                    .map(voucherUsage -> voucherUsage.getVoucher().getCode())
+            return orderRepository.findById(orderId)
+                    .map(order -> {
+                        // Lấy mã voucher từ relationship Voucher
+                        if (order.getVoucher() != null) {
+                            return order.getVoucher().getCode();
+                        }
+                        return null;
+                    })
                     .orElse(null);
         } catch (Exception e) {
-            // Log error and return null if unable to fetch voucher code
-            System.err.println("Error fetching voucher code for order " + orderId + ": " + e.getMessage());
+            System.err.println("Lỗi khi lấy mã voucher cho đơn hàng " + orderId + ": " + e.getMessage());
             return null;
         }
     }
+
+
 }

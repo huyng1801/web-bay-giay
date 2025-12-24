@@ -25,18 +25,36 @@ import vn.student.polyshoes.repository.SubCategoryRepository;
 
 import java.util.Date;
 
+/**
+ * Seeder dùng để khởi tạo dữ liệu sản phẩm, thương hiệu, danh mục, và các biến thể màu/kích cỡ
+ * Tự động chạy khi ứng dụng khởi động nếu bảng product còn trống
+ * Tạo 20 sản phẩm từ 8 thương hiệu giày nổi tiếng
+ */
 @Component
 @Configuration
 public class ProductDataSeeder {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductDataSeeder.class);
 
+    /**
+     * Khởi tạo dữ liệu sản phẩm và các thông tin liên quan
+     * @param productRepository Repository dùng để lưu sản phẩm
+     * @param brandRepository Repository dùng để lưu thương hiệu
+     * @param subCategoryRepository Repository dùng để lưu danh mục phụ
+     * @param categoryRepository Repository dùng để lưu danh mục chính
+     * @param productColorRepository Repository dùng để lưu biến thể màu sản phẩm
+     * @param productSizeRepository Repository dùng để lưu biến thể kích cỡ sản phẩm
+     * @param productColorImageRepository Repository dùng để lưu hình ảnh biến thể màu
+     * @return CommandLineRunner thực thi khi ứng dụng khởi động
+     */
     @Bean
     CommandLineRunner seedProducts(ProductRepository productRepository, BrandRepository brandRepository, SubCategoryRepository subCategoryRepository, CategoryRepository categoryRepository, ProductColorRepository productColorRepository, ProductSizeRepository productSizeRepository, ProductColorImageRepository productColorImageRepository) {
         return args -> {
-            if (productRepository.count() == 0) { // Prevents duplicate entries
+            // Kiểm tra xem có dữ liệu sản phẩm đã tồn tại không
+            if (productRepository.count() == 0) {
+                logger.info("Bắt đầu khởi tạo 20 sản phẩm giày với 55+ biến thể màu...");
 
-                // Retrieve or create shoe brands
+                // ===== BƯỚC 1: Tạo hoặc lấy các thương hiệu giày =====
                 Brand nike = findOrCreateBrand(brandRepository, "Nike", "https://picsum.photos/200/100?random=1");
                 Brand adidas = findOrCreateBrand(brandRepository, "Adidas", "https://picsum.photos/200/100?random=2");
                 Brand puma = findOrCreateBrand(brandRepository, "Puma", "https://picsum.photos/200/100?random=3");
@@ -46,22 +64,27 @@ public class ProductDataSeeder {
                 Brand timberland = findOrCreateBrand(brandRepository, "Timberland", "https://picsum.photos/200/100?random=7");
                 Brand reebok = findOrCreateBrand(brandRepository, "Reebok", "https://picsum.photos/200/100?random=8");
 
-                // Categories for shoes
+                // ===== BƯỚC 2: Tạo hoặc lấy các danh mục chính (loại giày) =====
                 Category categoryGiayTheThao = findOrCreateCategory(categoryRepository, "Giày thể thao");
                 Category categoryGiayCasual = findOrCreateCategory(categoryRepository, "Giày casual");
                 Category categoryGiayBoot = findOrCreateCategory(categoryRepository, "Giày boot");
 
-                // Subcategories
+                // ===== BƯỚC 3: Tạo hoặc lấy các danh mục phụ (loại chi tiết) =====
                 SubCategory giayChuaySneaker = findOrCreateSubCategory(subCategoryRepository, "Sneaker chạy bộ", categoryGiayTheThao, Gender.UNISEX);
                 SubCategory giayTennis = findOrCreateSubCategory(subCategoryRepository, "Giày tennis", categoryGiayTheThao, Gender.UNISEX);
                 SubCategory giayBongRo = findOrCreateSubCategory(subCategoryRepository, "Giày bóng rổ", categoryGiayTheThao, Gender.UNISEX);
                 SubCategory giayCanh = findOrCreateSubCategory(subCategoryRepository, "Giày canvas", categoryGiayCasual, Gender.UNISEX);
                 SubCategory giayBootDa = findOrCreateSubCategory(subCategoryRepository, "Boot da", categoryGiayBoot, Gender.UNISEX);
 
+                // ===== BƯỚC 4: Định nghĩa các kích cỡ giày tiêu chuẩn và số lượng kho =====
+                // Danh sách kích cỡ giày tiêu chuẩn (từ 36 đến 45)
                 String[] shoeSizes = {"36", "37", "38", "39", "40", "41", "42", "43", "44", "45"};
+                // Số lượng kho tương ứng với từng kích cỡ
                 Integer[] stockQuantities = {12, 14, 16, 18, 20, 18, 16, 14, 12, 10};
 
-                // ===== NIKE PRODUCTS =====
+                // ===== BƯỚC 5: KHỞI TẠO 20 SẢN PHẨM GIÀY TỪCÁC THƯƠNG HIỆU =====
+
+                // ===== NIKE: 4 sản phẩm (Chạy bộ, Bóng rổ, Chạy bộ giá rẻ, Canvas) =====
                 Product p1 = addProduct(productRepository, nike, giayChuaySneaker, "Nike Air Zoom Pegasus 39 - Giày chạy bộ cao cấp", 2499000, 20);
                 addProductColor(productColorRepository, productColorImageRepository, productSizeRepository, p1, "Đen",
                     "https://picsum.photos/600/600?random=11",
@@ -106,7 +129,7 @@ public class ProductDataSeeder {
                     new String[]{"https://picsum.photos/600/600?random=44", "https://picsum.photos/600/600?random=45"},
                     shoeSizes, stockQuantities);
 
-                // ===== ADIDAS PRODUCTS =====
+                // ===== ADIDAS: 4 sản phẩm (Chạy bộ cao cấp, Tennis, Chạy bộ thời trang, Canvas) =====
                 Product p5 = addProduct(productRepository, adidas, giayChuaySneaker, "Adidas Ultraboost 22 - Công nghệ boost hàng đầu", 2799000, 18);
                 addProductColor(productColorRepository, productColorImageRepository, productSizeRepository, p5, "Đen",
                     "https://picsum.photos/600/600?random=51",
@@ -155,7 +178,7 @@ public class ProductDataSeeder {
                     new String[]{"https://picsum.photos/600/600?random=84", "https://picsum.photos/600/600?random=85"},
                     shoeSizes, stockQuantities);
 
-                // ===== PUMA PRODUCTS =====
+                // ===== PUMA: 2 sản phẩm (Giày retro thời trang, Giày bóng rổ) =====
                 Product p9 = addProduct(productRepository, puma, giayChuaySneaker, "Puma RS-X - Giày retro futuristic", 1299000, 22);
                 addProductColor(productColorRepository, productColorImageRepository, productSizeRepository, p9, "Đen",
                     "https://picsum.photos/600/600?random=91",
@@ -176,7 +199,7 @@ public class ProductDataSeeder {
                     new String[]{"https://picsum.photos/600/600?random=104", "https://picsum.photos/600/600?random=105"},
                     shoeSizes, stockQuantities);
 
-                // ===== CONVERSE PRODUCTS =====
+                // ===== CONVERSE: 2 sản phẩm (Canvas cổ điển, Canvas cổ cao) =====
                 Product p11 = addProduct(productRepository, converse, giayCanh, "Converse Chuck Taylor All Star - Huyền thoại không lão", 899000, 25);
                 addProductColor(productColorRepository, productColorImageRepository, productSizeRepository, p11, "Đen",
                     "https://picsum.photos/600/600?random=111",
@@ -201,7 +224,7 @@ public class ProductDataSeeder {
                     new String[]{"https://picsum.photos/600/600?random=123", "https://picsum.photos/600/600?random=124"},
                     shoeSizes, stockQuantities);
 
-                // ===== VANS PRODUCTS =====
+                // ===== VANS: 2 sản phẩm (Giày skate cổ điển, Giày skate cơ bản) =====
                 Product p13 = addProduct(productRepository, vans, giayCanh, "Vans Old Skool - Biểu tượng skate", 1199000, 18);
                 addProductColor(productColorRepository, productColorImageRepository, productSizeRepository, p13, "Đen trắng",
                     "https://picsum.photos/600/600?random=131",
@@ -226,7 +249,7 @@ public class ProductDataSeeder {
                     new String[]{"https://picsum.photos/600/600?random=143", "https://picsum.photos/600/600?random=144"},
                     shoeSizes, stockQuantities);
 
-                // ===== NEW BALANCE PRODUCTS =====
+                // ===== NEW BALANCE: 2 sản phẩm (Giày chạy huyền thoại, Giày casual thoải mái) =====
                 Product p15 = addProduct(productRepository, newBalance, giayChuaySneaker, "New Balance 990v5 - Giày chạy huyền thoại", 2199000, 16);
                 addProductColor(productColorRepository, productColorImageRepository, productSizeRepository, p15, "Xám",
                     "https://picsum.photos/600/600?random=151",
@@ -251,7 +274,7 @@ public class ProductDataSeeder {
                     new String[]{"https://picsum.photos/600/600?random=166", "https://picsum.photos/600/600?random=167"},
                     shoeSizes, stockQuantities);
 
-                // ===== TIMBERLAND PRODUCTS =====
+                // ===== TIMBERLAND: 2 sản phẩm (Boot da cổ điển, Boot da bền bỉ) =====
                 Product p17 = addProduct(productRepository, timberland, giayBootDa, "Timberland 6 Inch Premium Boot - Boot da cổ điển", 2999000, 12);
                 addProductColor(productColorRepository, productColorImageRepository, productSizeRepository, p17, "Nâu",
                     "https://picsum.photos/600/600?random=171",
@@ -272,7 +295,7 @@ public class ProductDataSeeder {
                     new String[]{"https://picsum.photos/600/600?random=184", "https://picsum.photos/600/600?random=185"},
                     shoeSizes, stockQuantities);
 
-                // ===== REEBOK PRODUCTS =====
+                // ===== REEBOK: 2 sản phẩm (Giày retro cổ điển, Giày casual thanh lịch) =====
                 Product p19 = addProduct(productRepository, reebok, giayChuaySneaker, "Reebok Classic Leather Legacy - Giày retro cổ điển", 1299000, 21);
                 addProductColor(productColorRepository, productColorImageRepository, productSizeRepository, p19, "Trắng",
                     "https://picsum.photos/600/600?random=191",
@@ -298,9 +321,17 @@ public class ProductDataSeeder {
         };
     }
 
+    /**
+     * Tìm kiếm thương hiệu theo tên hoặc tạo mới nếu chưa tồn tại
+     * @param brandRepository Repository dùng để truy vấn thương hiệu
+     * @param brandName Tên của thương hiệu cần tìm/tạo
+     * @param imageUrl URL của hình ảnh thương hiệu
+     * @return Brand object - thương hiệu tìm được hoặc vừa tạo
+     */
     private Brand findOrCreateBrand(BrandRepository brandRepository, String brandName, String imageUrl) {
         return brandRepository.findByBrandName(brandName)
             .orElseGet(() -> {
+                // Tạo thương hiệu mới nếu chưa tồn tại
                 Brand brand = new Brand();
                 brand.setBrandName(brandName);
                 brand.setImageUrl(imageUrl);
@@ -310,9 +341,18 @@ public class ProductDataSeeder {
             });
     }
 
+    /**
+     * Tìm kiếm danh mục phụ theo tên hoặc tạo mới nếu chưa tồn tại
+     * @param subCategoryRepository Repository dùng để truy vấn danh mục phụ
+     * @param subCategoryName Tên của danh mục phụ cần tìm/tạo
+     * @param category Danh mục chính mà danh mục phụ thuộc vào
+     * @param gender Giới tính áp dụng (NAM, NỮ, hoặc UNISEX)
+     * @return SubCategory object - danh mục phụ tìm được hoặc vừa tạo
+     */
     private SubCategory findOrCreateSubCategory(SubCategoryRepository subCategoryRepository, String subCategoryName, Category category, Gender gender) {
         return subCategoryRepository.findBySubCategoryName(subCategoryName)
             .orElseGet(() -> {
+                // Tạo danh mục phụ mới nếu chưa tồn tại
                 SubCategory subCategory = new SubCategory();
                 subCategory.setSubCategoryName(subCategoryName);
                 subCategory.setCategory(category);
@@ -323,9 +363,16 @@ public class ProductDataSeeder {
             });
     }
 
+    /**
+     * Tìm kiếm danh mục chính theo tên hoặc tạo mới nếu chưa tồn tại
+     * @param categoryRepository Repository dùng để truy vấn danh mục chính
+     * @param categoryName Tên của danh mục chính cần tìm/tạo
+     * @return Category object - danh mục chính tìm được hoặc vừa tạo
+     */
     private Category findOrCreateCategory(CategoryRepository categoryRepository, String categoryName) {
         return categoryRepository.findByCategoryName(categoryName)
             .orElseGet(() -> {
+                // Tạo danh mục chính mới nếu chưa tồn tại
                 Category category = new Category();
                 category.setCategoryName(categoryName);
                 category.setCreatedAt(new Date());
@@ -334,25 +381,45 @@ public class ProductDataSeeder {
             });
     }
 
+    /**
+     * Tạo mới sản phẩm giày
+     * @param productRepository Repository dùng để lưu sản phẩm
+     * @param brand Thương hiệu sản phẩm
+     * @param subCategory Danh mục phụ của sản phẩm
+     * @param productName Tên sản phẩm
+     * @param price Giá bán sản phẩm (VNĐ)
+     * @param discountPercentage Phần trăm giảm giá (nếu có)
+     * @return Product object - sản phẩm vừa tạo
+     */
     private Product addProduct(ProductRepository productRepository, Brand brand, SubCategory subCategory, String productName, long price, Integer discountPercentage) {
+        // Khởi tạo sản phẩm mới
         Product product = new Product();
         product.setProductName(productName);
         
-        // Set detailed description based on product type
+        // Tạo mô tả chi tiết dựa trên loại sản phẩm
         String description = generateProductDescription(productName);
         product.setDescription(description);
         
+        // Gán giá bán và thông tin giảm giá
         product.setSellingPrice(price);
         product.setDiscountPercentage(discountPercentage != null ? discountPercentage : 0);
+        // Liên kết với thương hiệu và danh mục phụ
         product.setBrand(brand);
         product.setSubCategory(subCategory);
+        // Đặt sản phẩm ở trạng thái hoạt động
         product.setIsActive(true);
         product.setCreatedAt(new Date());
         product.setUpdatedAt(new Date());
         return productRepository.save(product);
     }
 
+    /**
+     * Tạo mô tả chi tiết sản phẩm dựa trên tên và loại giày
+     * @param productName Tên sản phẩm
+     * @return String mô tả chi tiết sản phẩm
+     */
     private String generateProductDescription(String productName) {
+        // Tạo mô tả dựa trên loại sản phẩm
         if (productName.contains("Boot")) {
             return "Boot da cao cấp, thiết kế cổ điển và bền bỉ. Chất liệu da tự nhiên, thoáng khí và bảo vệ chân tốt. Phù hợp cho nhiều dịp từ casual đến formal.";
         } else if (productName.contains("Bóng rổ")) {
@@ -368,8 +435,18 @@ public class ProductDataSeeder {
         }
     }
 
-
-    // Modified addProductColor to include sizes and stock quantities
+    /**
+     * Thêm biến thể màu cho sản phẩm, bao gồm hình ảnh và kích cỡ
+     * @param productColorRepository Repository dùng để lưu biến thể màu
+     * @param productColorImageRepository Repository dùng để lưu hình ảnh biến thể
+     * @param productSizeRepository Repository dùng để lưu kích cỡ sản phẩm
+     * @param product Sản phẩm cần thêm biến thể màu
+     * @param colorName Tên màu sắc
+     * @param imageUrl URL hình ảnh chính của màu
+     * @param imageUrls Mảng URL hình ảnh chi tiết của màu
+     * @param sizeValues Mảng các kích cỡ giày (36, 37, 38, ...)
+     * @param stockQuantities Mảng số lượng kho tương ứng với mỗi kích cỡ
+     */
     private void addProductColor(
         ProductColorRepository productColorRepository,
         ProductColorImageRepository productColorImageRepository,
@@ -381,34 +458,48 @@ public class ProductDataSeeder {
         String[] sizeValues,
         Integer[] stockQuantities
     ) {
+        // Tạo biến thể màu sản phẩm
         ProductColor productColor = new ProductColor();
         productColor.setProduct(product);
         productColor.setColorName(colorName);
         productColor.setImageUrl(imageUrl);
-        productColor = productColorRepository.save(productColor);  // Save the ProductColor first
+        productColor = productColorRepository.save(productColor);  // Lưu biến thể màu trước
         
-        // Add images to the product color
+        // Thêm hình ảnh chi tiết cho biến thể màu
         for (String imgUrl : imageUrls) {
             addProductColorImage(productColorImageRepository, productColor, imgUrl);
         }
         
-        // Add sizes and stock quantities to the product color
+        // Thêm các kích cỡ và số lượng kho cho biến thể màu
         for (int i = 0; i < sizeValues.length; i++) {
             addProductSize(productSizeRepository, productColor, sizeValues[i], stockQuantities[i]);
         }
         
     }
 
-    // Adding images to the product color
+    /**
+     * Thêm hình ảnh chi tiết cho biến thể màu sản phẩm
+     * @param productColorImageRepository Repository dùng để lưu hình ảnh
+     * @param productColor Biến thể màu của sản phẩm
+     * @param imageUrl URL hình ảnh cần thêm
+     */
     private void addProductColorImage(ProductColorImageRepository productColorImageRepository, ProductColor productColor, String imageUrl) {
+        // Tạo bản ghi hình ảnh mới
         ProductColorImage productColorImage = new ProductColorImage();
         productColorImage.setProductColor(productColor);
         productColorImage.setImageUrl(imageUrl);
         productColorImageRepository.save(productColorImage);
     }
 
-    // Adding sizes to the product color
+    /**
+     * Thêm kích cỡ và số lượng kho cho biến thể màu sản phẩm
+     * @param productSizeRepository Repository dùng để lưu kích cỡ
+     * @param productColor Biến thể màu của sản phẩm
+     * @param sizeValue Kích cỡ giày (ví dụ: 36, 37, 38, ...)
+     * @param stockQuantity Số lượng sản phẩm có sẵn trong kho
+     */
     private void addProductSize(ProductSizeRepository productSizeRepository, ProductColor productColor, String sizeValue, Integer stockQuantity) {
+        // Tạo bản ghi kích cỡ mới
         ProductSize productSize = new ProductSize();
         productSize.setSizeValue(sizeValue);
         productSize.setStockQuantity(stockQuantity);

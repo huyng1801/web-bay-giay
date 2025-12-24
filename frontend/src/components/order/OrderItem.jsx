@@ -1,9 +1,32 @@
 import React from 'react';
-import { Image, Button } from 'antd';
-import { StarOutlined } from '@ant-design/icons';
+import { Image, Button, Tag } from 'antd';
+import { StarOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { formatPrice } from '../../utils/formatters';
 
-const OrderItem = ({ item, orderId, orderStatus, onFeedback }) => {
+const OrderItem = ({ item, orderId, orderStatus, onFeedback, customerFeedbacks = {} }) => {
+    // Get productId from item
+    const productId = item.productId || item.product_id || item.id;
+    
+    // Create key for checking feedback: orderId_productId
+    const feedbackKey = `${orderId}_${productId}`;
+    
+    // Check if this product has been reviewed by customer for this specific order
+    const hasReviewed = customerFeedbacks[feedbackKey] !== undefined && customerFeedbacks[feedbackKey] !== null;
+    
+    // Only show feedback button if order is DELIVERED/COMPLETED and product hasn't been reviewed
+    // Check for multiple possible completion statuses
+    const isOrderCompleted = ['DELIVERED', 'COMPLETED', 'FINISHED', 'DONE'].includes(orderStatus);
+    const showFeedbackButton = isOrderCompleted && !hasReviewed;
+    
+    console.log(`OrderItem [${orderId}_${productId}]:`, {
+        orderStatus,
+        isOrderCompleted,
+        feedbackKey,
+        hasReviewed,
+        showFeedbackButton,
+        customerFeedbacksKeys: Object.keys(customerFeedbacks),
+        allCustomerFeedbacks: customerFeedbacks
+    });
     const styles = {
         itemRow: {
             display: 'flex',
@@ -65,7 +88,7 @@ const OrderItem = ({ item, orderId, orderStatus, onFeedback }) => {
                 <div style={styles.itemPrice}>
                     {formatPrice(item.unitPrice)}
                 </div>
-                {orderStatus === 'DELIVERED' && (
+                {showFeedbackButton && (
                     <Button
                         type="primary"
                         size="small"
@@ -75,6 +98,11 @@ const OrderItem = ({ item, orderId, orderStatus, onFeedback }) => {
                     >
                         Đánh giá
                     </Button>
+                )}
+                {hasReviewed && (
+                    <Tag color="success" icon={<CheckCircleOutlined />} style={{ marginTop: '8px' }}>
+                        Đã đánh giá
+                    </Tag>
                 )}
             </div>
         </div>

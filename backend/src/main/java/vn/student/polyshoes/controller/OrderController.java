@@ -1,3 +1,4 @@
+// Controller quản lý các chức năng liên quan đến đơn hàng
 package vn.student.polyshoes.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,10 +10,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import vn.student.polyshoes.dto.GuestDto;
 import vn.student.polyshoes.dto.OrderDto;
 import vn.student.polyshoes.dto.OrderFilterDto;
-import vn.student.polyshoes.dto.OrderFilterResponse;
 import vn.student.polyshoes.dto.OrderItemDto;
 import vn.student.polyshoes.dto.OrderRequestDto;
 import vn.student.polyshoes.enums.OrderStatus;
+import vn.student.polyshoes.response.OrderFilterResponse;
 import vn.student.polyshoes.response.OrderItemResponse;
 import vn.student.polyshoes.response.OrderResponse;
 import vn.student.polyshoes.response.OrderStatusHistoryResponse;
@@ -26,23 +27,27 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
+// Đánh dấu đây là REST controller, xử lý các API liên quan đến đơn hàng
 @RestController
+// Định nghĩa đường dẫn gốc cho các API của controller này
 @RequestMapping("/orders")
 public class OrderController {
 
+    // Inject OrderService để xử lý logic đơn hàng
     @Autowired
     private OrderService orderService;
 
+    // Inject OrderStatusHistoryService để lấy lịch sử trạng thái đơn hàng
     @Autowired
     private OrderStatusHistoryService orderStatusHistoryService;
 
-    // Get all orders
+    // Lấy danh sách tất cả đơn hàng
     @GetMapping
     public ResponseEntity<List<OrderResponse>> getAllOrders() {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
-    // Get filtered orders with pagination
+    // Lọc đơn hàng có phân trang
     @GetMapping("/filter")
     public ResponseEntity<?> getFilteredOrders(
             @RequestParam(required = false) String searchText,
@@ -89,7 +94,7 @@ public class OrderController {
         }
     }
 
-    // Alternative POST endpoint for complex filters
+    // Endpoint POST cho lọc đơn hàng phức tạp
     @PostMapping("/filter")
     public ResponseEntity<?> getFilteredOrdersPost(@RequestBody OrderFilterDto filterDto) {
         try {
@@ -111,7 +116,7 @@ public class OrderController {
         }
     }
 
-    // Get orders by customer ID
+    // Lấy danh sách đơn hàng theo id khách hàng
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<OrderResponse>> getOrdersByCustomerId(@PathVariable Integer customerId) {
         try {
@@ -123,7 +128,7 @@ public class OrderController {
     }
 
 
-    // Create a new order (fixed to use OrderRequestDto)
+    // Tạo mới đơn hàng
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequestDto orderRequestDto) {
         GuestDto guestDto = orderRequestDto.getGuestDto();
@@ -134,7 +139,7 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
 
-    // Update an existing order (stub, implement service logic as needed)
+    // Cập nhật thông tin đơn hàng
     @PutMapping("/{orderId}")
     public ResponseEntity<OrderResponse> updateOrder(@PathVariable String orderId, @RequestBody OrderDto orderDto) {
         OrderResponse updatedOrder = orderService.updateOrder(orderId, orderDto);
@@ -145,7 +150,7 @@ public class OrderController {
         }
     }
 
-    // Get order by ID
+    // Lấy thông tin đơn hàng theo id
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getOrderById(@PathVariable String orderId) {
         OrderResponse orderResponse = orderService.getOrderById(orderId);
@@ -156,7 +161,7 @@ public class OrderController {
         }
     }
     
-      // Get order items by order ID
+    // Lấy danh sách sản phẩm trong đơn hàng theo id đơn hàng
     @GetMapping("/{orderId}/items")
     public ResponseEntity<List<OrderItemResponse>> getOrderItemsByOrderId(@PathVariable String orderId) {
         try {
@@ -173,13 +178,14 @@ public class OrderController {
         }
     }
 
+    // Xóa đơn hàng theo id
     @DeleteMapping("/{orderId}")
     public ResponseEntity<Void> deleteOrder(@PathVariable String orderId) {
         orderService.deleteOrder(orderId);
         return ResponseEntity.noContent().build();
     }
     
-    // Update staff assignment for order
+    // Cập nhật nhân viên xử lý đơn hàng
     @PutMapping("/{orderId}/staff")
     public ResponseEntity<?> updateStaffAssignment(@PathVariable String orderId, @RequestBody Map<String, String> requestBody) {
         try {
@@ -193,7 +199,7 @@ public class OrderController {
         }
     }
     
-    // Process return order
+    // Xử lý trả hàng
     @PutMapping("/{orderId}/return")
     public ResponseEntity<?> processReturnOrder(@PathVariable String orderId, @RequestBody Map<String, String> requestBody) {
         try {
@@ -207,7 +213,7 @@ public class OrderController {
         }
     }
     
-    // Cancel order with validation rules
+    // Hủy đơn hàng với kiểm tra hợp lệ
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(@PathVariable String orderId, @RequestBody Map<String, Object> requestBody) {
         try {
@@ -224,7 +230,7 @@ public class OrderController {
         }
     }
 
-    // Update order status (user)
+    // Cập nhật trạng thái đơn hàng (user)
     @PutMapping("/{orderId}/status")
     public ResponseEntity<OrderResponse> updateOrderStatus(@PathVariable String orderId, @RequestBody Map<String, String> statusUpdate) {
         try {
@@ -241,7 +247,7 @@ public class OrderController {
         }
     }
 
-    // Update order status (admin)
+    // Cập nhật trạng thái đơn hàng (admin)
     @PutMapping("/{orderId}/admin-status")
     public ResponseEntity<?> updateOrderStatusAdmin(
             @PathVariable String orderId,
@@ -283,7 +289,7 @@ public class OrderController {
         }
     }
 
-    // Update order status (admin) - Alternative endpoint for frontend compatibility
+    // Cập nhật trạng thái đơn hàng (admin) - endpoint thay thế cho frontend
     @PutMapping("/order-status/{orderId}")
     public ResponseEntity<?> updateOrderStatusAdminAlt(
             @PathVariable String orderId,
@@ -342,7 +348,7 @@ public class OrderController {
         }
     }
 
-    // Lấy lịch sử trạng thái đơn hàng - Alternative endpoint for frontend compatibility
+    // Lấy lịch sử trạng thái đơn hàng - endpoint thay thế cho frontend
     @GetMapping("/order-status/{orderId}/history")
     public ResponseEntity<?> getOrderStatusHistoryAlt(@PathVariable String orderId) {
         try {
@@ -359,7 +365,7 @@ public class OrderController {
         }
     }
 
-    // Lấy địa chỉ IP của client
+    // Hàm hỗ trợ: lấy địa chỉ IP của client
     private String getClientIpAddress(HttpServletRequest request) {
         String xForwardedForHeader = request.getHeader("X-Forwarded-For");
         if (xForwardedForHeader == null) {

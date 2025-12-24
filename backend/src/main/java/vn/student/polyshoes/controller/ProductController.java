@@ -22,16 +22,16 @@ public class ProductController {
     @Autowired
     private ProductService productService;
     
-  // Get all products with optional filters: subCategoryId, gender, productName
-    @GetMapping
-    public ResponseEntity<List<ProductResponse>> getAllProducts(
+        // Lấy danh sách sản phẩm với các bộ lọc tuỳ chọn: subCategoryId, gender, productName
+        @GetMapping
+        public ResponseEntity<List<ProductResponse>> getAllProducts(
             @RequestParam(required = false) Integer subCategoryId,
             @RequestParam(required = false) Gender gender,
             @RequestParam(required = false) String productName) {
         return ResponseEntity.ok(productService.getAllProducts(subCategoryId, gender, productName));
     }
 
-    // Create a new product
+    // Tạo mới sản phẩm
     @PostMapping
     public ResponseEntity<?> createProduct(@Valid @RequestBody ProductDto productDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -41,7 +41,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(productResponse);
     }
 
-    // Get product by ID
+    // Lấy thông tin sản phẩm theo id
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProductById(@PathVariable("id") Integer productId) {
         ProductResponse productResponse = productService.getProductById(productId);
@@ -51,7 +51,7 @@ public class ProductController {
         return ResponseEntity.ok(productResponse);
     }
 
-    // Update a product
+    // Cập nhật thông tin sản phẩm theo id
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProduct(@PathVariable("id") Integer productId, @Valid @RequestBody ProductDto productDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -64,13 +64,14 @@ public class ProductController {
         return ResponseEntity.ok(productResponse);
     }
 
-    // Delete a product
+    // Xóa sản phẩm theo id
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable("id") Integer productId) {
         productService.deleteProduct(productId);
         return ResponseEntity.noContent().build();
     }
 
+    // Đổi trạng thái hoạt động của sản phẩm (ẩn/hiện)
     @PutMapping("/{id}/toggle-status")
     public ResponseEntity<?> toggleProductStatus(@PathVariable("id") Integer productId) {
         try {
@@ -82,7 +83,7 @@ public class ProductController {
         }
     }
 
-    // AI-enhanced search endpoint with GET parameters
+    // Tìm kiếm sản phẩm nâng cao (có thể dùng AI)
     @GetMapping("/search")
     public ResponseEntity<List<ProductResponse>> searchProducts(
             @RequestParam(required = false) String query,

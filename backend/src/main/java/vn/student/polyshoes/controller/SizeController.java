@@ -14,41 +14,42 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Controller quản lý các API liên quan đến size sản phẩm
 @RestController
 @RequestMapping("/sizes")
 public class SizeController {
     
+    // Inject service xử lý logic liên quan đến size
     @Autowired
     private SizeService sizeService;
     
-    // Lấy tất cả size
+    // Lấy danh sách tất cả size
     @GetMapping
     public ResponseEntity<List<SizeResponse>> getAllSizes() {
         List<SizeResponse> sizes = sizeService.getAllSizes();
         return ResponseEntity.ok(sizes);
     }
     
-    // Lấy tất cả size đang hoạt động (cho dropdown)
+    // Lấy danh sách size đang hoạt động (dùng cho dropdown)
     @GetMapping("/active")
     public ResponseEntity<List<SizeResponse>> getActiveSizes() {
         List<SizeResponse> sizes = sizeService.getActiveSizes();
         return ResponseEntity.ok(sizes);
     }
     
-    // Phân trang với tìm kiếm
+    // Lấy danh sách size có phân trang và bộ lọc tìm kiếm
     @GetMapping("/page")
     public ResponseEntity<Page<SizeResponse>> getSizesWithPagination(
             @RequestParam(required = false) String sizeValue,
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
         Pageable pageable = PageRequest.of(page, size);
         Page<SizeResponse> sizePage = sizeService.getSizesWithFilters(sizeValue, isActive, pageable);
         return ResponseEntity.ok(sizePage);
     }
     
-    // Lấy size theo ID
+    // Lấy thông tin size theo id
     @GetMapping("/{id}")
     public ResponseEntity<SizeResponse> getSizeById(@PathVariable Integer id) {
         return sizeService.getSizeById(id)
@@ -56,7 +57,7 @@ public class SizeController {
                 .orElse(ResponseEntity.notFound().build());
     }
     
-    // Tạo size mới
+    // Tạo mới một size
     @PostMapping
     public ResponseEntity<?> createSize(@Valid @RequestBody SizeDto requestDTO) {
         try {
@@ -67,7 +68,7 @@ public class SizeController {
         }
     }
     
-    // Cập nhật size
+    // Cập nhật thông tin size theo id
     @PutMapping("/{id}")
     public ResponseEntity<?> updateSize(@PathVariable Integer id, 
                                        @Valid @RequestBody SizeDto requestDTO) {
@@ -79,7 +80,7 @@ public class SizeController {
         }
     }
     
-    // Xóa size
+    // Xóa size theo id
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteSize(@PathVariable Integer id) {
         try {

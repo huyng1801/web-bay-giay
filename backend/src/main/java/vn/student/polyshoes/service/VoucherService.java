@@ -4,11 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import vn.student.polyshoes.dto.VoucherUsageDTO;
+import vn.student.polyshoes.dto.VoucherUsageDto;
 import vn.student.polyshoes.model.*;
 import vn.student.polyshoes.repository.*;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,9 +20,6 @@ public class VoucherService {
 
     @Autowired
     private VoucherRepository voucherRepository;
-
-    @Autowired
-    private VoucherUsageRepository voucherUsageRepository;
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -172,9 +170,9 @@ public class VoucherService {
         return new VoucherValidationResult(true, "Voucher hợp lệ", discountAmount);
     }
 
-    // Áp dụng voucher cho đơn hàng
+    // Áp dụng voucher cho đơn hàng - phiên bản mới không sử dụng VoucherUsage
     @Transactional
-    public VoucherUsage applyVoucher(String code, Integer customerId, String orderId) {
+    public void applyVoucherToOrder(String code, Integer customerId, String orderId) {
         Optional<Voucher> voucherOpt = voucherRepository.findByCode(code);
         
         if (voucherOpt.isEmpty()) {
@@ -193,15 +191,19 @@ public class VoucherService {
             throw new RuntimeException(validation.getMessage());
         }
 
-        // Tạo record sử dụng voucher
-        VoucherUsage voucherUsage = new VoucherUsage(voucher, customer, order, validation.getDiscountAmount());
-        voucherUsageRepository.save(voucherUsage);
-
+        // Cập nhật thông tin voucher trong order
+        order.setVoucher(voucher);
+        
         // Cập nhật số lần sử dụng voucher
         voucher.incrementUsedCount();
         voucherRepository.save(voucher);
+        orderRepository.save(order);
+    }
 
-        return voucherUsage;
+    // Áp dụng voucher cho đơn hàng - phương thức dự phòng
+    @Transactional
+    public void applyVoucherDeprecated(String code, Integer customerId, String orderId) {
+        throw new UnsupportedOperationException("Method deprecated. Use applyVoucherToOrder instead.");
     }
 
     // Tính toán giảm giá
@@ -269,66 +271,67 @@ public class VoucherService {
         }
     }
 
-    // Lấy lịch sử sử dụng voucher của customer
-    public List<VoucherUsage> getCustomerVoucherHistory(Long customerId) {
-        return voucherUsageRepository.findByCustomerIdOrderByUsedAtDesc(customerId);
+    // Lấy lịch sử sử dụng voucher của customer từ Order entity
+    public List<Order> getCustomerVoucherHistory(Long customerId) {
+        return orderRepository.findByCustomerIdAndVoucherIsNotNullOrderByCreatedAtDesc(customerId);
     }
 
-    // Lấy thống kê sử dụng voucher
-    public List<VoucherUsage> getVoucherUsageHistory(Long voucherId) {
-        return voucherUsageRepository.findByVoucherIdOrderByUsedAtDesc(voucherId);
+    // Lấy thống kê sử dụng voucher từ Order entity
+    public List<Order> getVoucherUsageHistory(Long voucherId) {
+        return orderRepository.findByVoucherIdOrderByCreatedAtDesc(voucherId);
     }
 
-    // Lấy thống kê sử dụng voucher với DTO để tránh lỗi serialization
-    public List<VoucherUsageDTO> getVoucherUsageHistoryDTO(Long voucherId) {
-        List<VoucherUsage> usageHistory = voucherUsageRepository.findByVoucherIdOrderByUsedAtDesc(voucherId);
-        return usageHistory.stream().map(this::convertToDTO).collect(Collectors.toList());
+    // Lấy thống kê sử dụng voucher với DTO để tránh lỗi serialization - phiên bản mới từ Order
+    public List<VoucherUsageDto> getVoucherUsageHistoryDTO(Long voucherId) {
+        List<Order> orders = orderRepository.findByVoucherIdOrderByCreatedAtDesc(voucherId);
+        return orders.stream().map(this::convertOrderToVoucherUsageDTO).collect(Collectors.toList());
     }
 
-    // Chuyển đổi VoucherUsage entity sang DTO
-    private VoucherUsageDTO convertToDTO(VoucherUsage usage) {
-        VoucherUsageDTO dto = new VoucherUsageDTO();
-        dto.setUsageId(usage.getUsageId());
-        dto.setDiscountAmount(usage.getDiscountAmount());
-        dto.setUsedAt(usage.getUsedAt());
+    // Chuyển đổi Order entity sang VoucherUsageDTO
+    private VoucherUsageDto convertOrderToVoucherUsageDTO(Order order) {
+        VoucherUsageDto dto = new VoucherUsageDto();
+        dto.setUsageId(Long.valueOf(order.getOrderId().hashCode())); // Sử dụng hashCode của orderId làm usageId
+        dto.setDiscountAmount(order.getVoucherDiscount() != null ? order.getVoucherDiscount().doubleValue() : 0.0);
+        // Sử dụng createdAt làm thời gian sử dụng voucher
+        dto.setUsedAt(order.getCreatedAt().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
         
         // Voucher info
-        if (usage.getVoucher() != null) {
-            dto.setVoucherId(usage.getVoucher().getVoucherId());
-            dto.setVoucherCode(usage.getVoucher().getCode());
+        if (order.getVoucher() != null) {
+            dto.setVoucherId(order.getVoucher().getVoucherId());
+            dto.setVoucherCode(order.getVoucher().getCode());
         }
         
         // Customer info
-        if (usage.getCustomer() != null) {
-            dto.setCustomerId(usage.getCustomer().getCustomerId());
-            dto.setCustomerName(usage.getCustomer().getFullName());
-            dto.setCustomerPhone(usage.getCustomer().getPhone());
-            dto.setCustomerEmail(usage.getCustomer().getEmail());
+        if (order.getCustomer() != null) {
+            dto.setCustomerId(order.getCustomer().getCustomerId());
+            dto.setCustomerName(order.getCustomer().getFullName());
+            dto.setCustomerPhone(order.getCustomer().getPhone());
+            dto.setCustomerEmail(order.getCustomer().getEmail());
         }
         
         // Guest info
-        if (usage.getGuest() != null) {
-            dto.setGuestId(usage.getGuest().getGuestId());
-            dto.setGuestName(usage.getGuest().getFullName());
-            dto.setGuestPhone(usage.getGuest().getPhone());
-            dto.setGuestEmail(usage.getGuest().getEmail());
+        if (order.getGuest() != null) {
+            dto.setGuestId(order.getGuest().getGuestId());
+            dto.setGuestName(order.getGuest().getFullName());
+            dto.setGuestPhone(order.getGuest().getPhone());
+            dto.setGuestEmail(order.getGuest().getEmail());
         }
         
         // Order info
-        if (usage.getOrder() != null) {
-            dto.setOrderId(usage.getOrder().getOrderId());
-            dto.setOrderStatus(usage.getOrder().getOrderStatus() != null ? 
-                usage.getOrder().getOrderStatus().toString() : null);
-            dto.setOriginalPrice(usage.getOrder().getOriginalPrice());
-            dto.setTotalPrice(Long.valueOf(usage.getOrder().getTotalPrice()));
-            dto.setVoucherDiscount(usage.getOrder().getVoucherDiscount());
-            dto.setCreatedAt(usage.getOrder().getCreatedAt());
-        }
+        dto.setOrderId(order.getOrderId());
+        dto.setOrderStatus(order.getOrderStatus() != null ? 
+            order.getOrderStatus().toString() : null);
+        dto.setOriginalPrice(order.getOriginalPrice());
+        dto.setTotalPrice(Long.valueOf(order.getTotalPrice()));
+        dto.setVoucherDiscount(order.getVoucherDiscount());
+        dto.setCreatedAt(order.getCreatedAt());
         
         return dto;
     }
 
-    // Kiểm tra lịch sử sử dụng voucher theo nhiều identifier
+
+
+    // Kiểm tra lịch sử sử dụng voucher theo nhiều identifier - sử dụng Order
     public boolean checkVoucherUsageHistoryByIdentifier(String voucherCode, Integer customerId, String customerEmail, String customerPhone) {
         // Tìm voucher theo code
         Optional<Voucher> voucherOpt = voucherRepository.findByCode(voucherCode);
@@ -338,9 +341,9 @@ public class VoucherService {
 
         Long voucherId = voucherOpt.get().getVoucherId();
         
-        // Nếu có customerId, kiểm tra trực tiếp
+        // Nếu có customerId, kiểm tra trực tiếp từ Order
         if (customerId != null && customerId > 0) {
-            return voucherUsageRepository.existsByVoucherIdAndCustomerId(voucherId, customerId.longValue());
+            return voucherRepository.hasCustomerUsedVoucher(voucherId, customerId.longValue());
         }
         
         // Nếu có email hoặc phone, tìm customer trước
@@ -356,13 +359,111 @@ public class VoucherService {
             }
             
             if (customer != null) {
-                return voucherUsageRepository.existsByVoucherIdAndCustomerId(voucherId, customer.getCustomerId().longValue());
+                return voucherRepository.hasCustomerUsedVoucher(voucherId, customer.getCustomerId().longValue());
             }
         }
         
         // Nếu không tìm thấy customer hoặc là guest, return false
         return false;
     }
+
+    // Lấy lịch sử sử dụng voucher của customer - phiên bản cũ cho frontend
+    public List<Order> getCustomerVoucherHistoryOld(Long customerId) {
+        return orderRepository.findByCustomerIdAndVoucherIsNotNullOrderByCreatedAtDesc(customerId);
+    }
+
+    // Lấy lịch sử sử dụng voucher theo voucher id - phiên bản cũ cho frontend  
+    public List<Order> getVoucherUsageHistoryOld(Long voucherId) {
+        return orderRepository.findByVoucherIdOrderByCreatedAtDesc(voucherId);
+    }
+
+    // Lấy thống kê sử dụng voucher với DTO - phiên bản cũ cho frontend
+    public List<VoucherUsageDto> getVoucherUsageHistoryDTOOld(Long voucherId) {
+        List<Order> usageHistory = orderRepository.findByVoucherIdOrderByCreatedAtDesc(voucherId);
+        return usageHistory.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    // Chuyển đổi Order sang VoucherUsageDto - phiên bản cũ cho frontend
+    private VoucherUsageDto convertToDTO(Order order) {
+        VoucherUsageDto dto = new VoucherUsageDto();
+        dto.setUsageId(Long.valueOf(order.getOrderId().hashCode()));
+        dto.setDiscountAmount(order.getVoucherDiscount() != null ? order.getVoucherDiscount().doubleValue() : 0.0);
+        // Sử dụng createdAt làm thời gian sử dụng voucher
+        dto.setUsedAt(order.getCreatedAt().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+        
+        // Voucher info
+        if (order.getVoucher() != null) {
+            dto.setVoucherId(order.getVoucher().getVoucherId());
+            dto.setVoucherCode(order.getVoucher().getCode());
+        }
+        
+        // Customer info
+        if (order.getCustomer() != null) {
+            dto.setCustomerId(order.getCustomer().getCustomerId());
+            dto.setCustomerName(order.getCustomer().getFullName());
+            dto.setCustomerPhone(order.getCustomer().getPhone());
+            dto.setCustomerEmail(order.getCustomer().getEmail());
+        }
+        
+        // Guest info
+        if (order.getGuest() != null) {
+            dto.setGuestId(order.getGuest().getGuestId());
+            dto.setGuestName(order.getGuest().getFullName());
+            dto.setGuestPhone(order.getGuest().getPhone());
+            dto.setGuestEmail(order.getGuest().getEmail());
+        }
+        
+        // Order info
+        dto.setOrderId(order.getOrderId());
+        dto.setOrderStatus(order.getOrderStatus() != null ? 
+            order.getOrderStatus().toString() : null);
+        dto.setOriginalPrice(order.getOriginalPrice());
+        dto.setTotalPrice(Long.valueOf(order.getTotalPrice()));
+        dto.setVoucherDiscount(order.getVoucherDiscount());
+        dto.setCreatedAt(order.getCreatedAt());
+        
+        return dto;
+    }
+
+    // Kiểm tra lịch sử sử dụng voucher theo identifier - phiên bản cũ cho frontend
+    public boolean checkVoucherUsageHistoryByIdentifierOld(String voucherCode, Integer customerId, String customerEmail, String customerPhone) {
+        // Tìm voucher theo code
+        Optional<Voucher> voucherOpt = voucherRepository.findByCode(voucherCode);
+        if (voucherOpt.isEmpty()) {
+            throw new RuntimeException("Voucher không tồn tại: " + voucherCode);
+        }
+
+        Long voucherId = voucherOpt.get().getVoucherId();
+        
+        // Nếu có customerId, kiểm tra trực tiếp từ Order
+        if (customerId != null && customerId > 0) {
+            List<Order> orders = orderRepository.findByCustomerIdAndVoucherId(customerId.longValue(), voucherId);
+            return !orders.isEmpty();
+        }
+        
+        // Nếu có email hoặc phone, tìm customer trước
+        if (customerEmail != null || customerPhone != null) {
+            Customer customer = null;
+            
+            if (customerEmail != null) {
+                customer = customerRepository.findByEmail(customerEmail).orElse(null);
+            }
+            
+            if (customer == null && customerPhone != null) {
+                customer = customerRepository.findByPhone(customerPhone).orElse(null);
+            }
+            
+            if (customer != null && customer.getCustomerId() != null) {
+                List<Order> orders = orderRepository.findByCustomerIdAndVoucherId(customer.getCustomerId().longValue(), voucherId);
+                return !orders.isEmpty();
+            }
+        }
+        
+        // Nếu không tìm thấy customer hoặc là guest, return false
+        return false;
+    }
+
+
 
     // Inner class cho kết quả validation
     public static class VoucherValidationResult {

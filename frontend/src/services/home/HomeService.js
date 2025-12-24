@@ -286,6 +286,17 @@ export const getFeedbacksByProduct = async (productId) => {
     }
 };
 
+// Get feedbacks by customer and order
+export const getFeedbacksByCustomerAndOrder = async (customerId, orderId) => {
+    try {
+        const response = await axios.get(`${BASE_URL}/feedback/customer/${customerId}/order/${orderId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching customer order feedbacks:", error);
+        return []; // Return empty array if error
+    }
+};
+
 // Get order status history by order ID
 export const getOrderStatusHistory = async (orderId) => {
     try {

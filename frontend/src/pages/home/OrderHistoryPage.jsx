@@ -5,7 +5,7 @@ import OrderCard from '../../components/order/OrderCard';
 import FeedbackModal from '../../components/order/FeedbackModal';
 import EmptyOrderState from '../../components/order/EmptyOrderState';
 import OrderStatusHistory from '../../components/order/OrderStatusHistory';
-import { getCustomerByEmail, getOrdersByCustomerId, getOrderStatusHistory, cancelOrder, createProductFeedback } from '../../services/home/HomeService';
+import { getCustomerByEmail, getOrdersByCustomerId, getOrderStatusHistory, cancelOrder, createProductFeedback, getFeedbacksByCustomerAndOrder } from '../../services/home/HomeService';
 import { formatDate } from '../../utils/formatters';
 
 import { jwtDecode } from 'jwt-decode';
@@ -74,6 +74,7 @@ const OrderHistoryPage = () => {
     const [statusHistoryVisible, setStatusHistoryVisible] = useState(false);
     const [selectedOrderId, setSelectedOrderId] = useState(null);
     const [orderStatusHistories, setOrderStatusHistories] = useState({}); // Store status histories for all orders
+    const [customerFeedbacks, setCustomerFeedbacks] = useState({}); // Store customer feedbacks {orderId_productId: feedback}
     const navigate = useNavigate();
     
     // Form instance for feedback modal
@@ -130,6 +131,30 @@ const OrderHistoryPage = () => {
                             historiesMap[orderId] = history;
                         });
                         setOrderStatusHistories(historiesMap);
+                        
+                        // Load all feedbacks for each order
+                        const feedbackPromises = orderHistory.map(async (order) => {
+                            try {
+                                const feedbacks = await getFeedbacksByCustomerAndOrder(customerData.customerId, order.orderId);
+                                return { orderId: order.orderId, feedbacks };
+                            } catch (error) {
+                                console.error(`Error loading feedbacks for order ${order.orderId}:`, error);
+                                return { orderId: order.orderId, feedbacks: [] };
+                            }
+                        });
+                        
+                        const allFeedbacks = await Promise.all(feedbackPromises);
+                        const feedbacksMap = {};
+                        allFeedbacks.forEach(({ orderId, feedbacks }) => {
+                            // Create a map with key as orderId_productId
+                            console.log(`Feedbacks for order ${orderId}:`, feedbacks);
+                            feedbacks.forEach(feedback => {
+                                const key = `${orderId}_${feedback.productId}`;
+                                feedbacksMap[key] = feedback;
+                            });
+                        });
+                        console.log('All customer feedbacks map:', feedbacksMap);
+                        setCustomerFeedbacks(feedbacksMap);
                     }
                 } else {
                     console.log('No customer data found');
@@ -234,6 +259,19 @@ const OrderHistoryPage = () => {
             await createProductFeedback(feedbackData);
             message.success('Gửi đánh giá thành công!');
             
+            // Update customerFeedbacks state to reflect the new feedback
+            const feedbackKey = `${selectedProduct.orderId}_${selectedProduct.productId}`;
+            setCustomerFeedbacks(prev => ({
+                ...prev,
+                [feedbackKey]: {
+                    customerId: customerInfo.customerId,
+                    productId: selectedProduct.productId,
+                    orderId: selectedProduct.orderId,
+                    rating: values.rating,
+                    comment: values.comment || ''
+                }
+            }));
+            
             // Reset form and close modal
             feedbackForm.resetFields();
             setFeedbackModalVisible(false);
@@ -279,6 +317,7 @@ const OrderHistoryPage = () => {
                                         onCancelOrder={handleCancelOrder}
                                         onFeedback={handleFeedback}
                                         statusHistories={orderStatusHistories[order.orderId]}
+                                        customerFeedbacks={customerFeedbacks}
                                         formatDate={formatDate}
                                         loading={loading}
                                     />

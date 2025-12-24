@@ -14,16 +14,25 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Seeder dùng để khởi tạo dữ liệu phương thức vận chuyển
+ * Tự động chạy khi ứng dụng khởi động nếu bảng shipping còn trống
+ */
 @Component
 public class ShippingDataSeeder {
 
     private static final Logger logger = LoggerFactory.getLogger(ShippingDataSeeder.class);
 
+    /**
+     * Khởi tạo các phương thức vận chuyển
+     * @param shippingRepository Repository dùng để lưu shipping
+     * @return CommandLineRunner thực thi khi ứng dụng khởi động
+     */
     @Bean
     CommandLineRunner seedShippings(ShippingRepository shippingRepository) {
         return args -> {
             if (shippingRepository.count() == 0) {
-                logger.info("Starting to seed 5 generic shipping methods...");
+                logger.info("Bắt đầu khởi tạo 5 phương thức vận chuyển...");
 
                 List<Shipping> shippingMethods = Arrays.asList(
                     createShipping("SHIPPER_1", "Đơn vị vận chuyển 1", 20000, "1-3 ngày", ShippingType.NORTHERN),

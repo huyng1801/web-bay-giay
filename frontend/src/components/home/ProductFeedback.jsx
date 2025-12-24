@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Rate, Typography, Empty, Spin, Pagination } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
-import { getFeedbacksByProduct, getAverageRating, getFeedbackCount } from '../../services/admin/FeedbackService';
+import { getFeedbacksByProduct } from '../../services/home/HomeService';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
@@ -246,17 +246,23 @@ const ProductFeedback = ({ productId }) => {
             if (productId) {
                 setLoading(true);
                 try {
-                    const [feedbackData, avgRating, count] = await Promise.all([
-                        getFeedbacksByProduct(productId),
-                        getAverageRating(productId),
-                        getFeedbackCount(productId)
-                    ]);
-                    setFeedbacks(feedbackData || []);
-                    setAverageRating(avgRating || 0);
-                    setTotalFeedbacks(count || 0);
+                    const feedbackData = await getFeedbacksByProduct(productId);
+                    const feedbacks = feedbackData || [];
+                    setFeedbacks(feedbacks);
+                    
+                    // Calculate average rating and total count from feedbackData
+                    const totalCount = feedbacks.length;
+                    const avgRating = totalCount > 0 
+                        ? feedbacks.reduce((sum, fb) => sum + fb.rating, 0) / totalCount 
+                        : 0;
+                    
+                    setAverageRating(avgRating);
+                    setTotalFeedbacks(totalCount);
                 } catch (error) {
                     console.error('Error fetching data:', error);
                     setFeedbacks([]);
+                    setAverageRating(0);
+                    setTotalFeedbacks(0);
                 } finally {
                     setLoading(false);
                 }

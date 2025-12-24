@@ -1,3 +1,4 @@
+// Controller quản lý tài khoản admin user
 package vn.student.polyshoes.controller;
 
 import org.springframework.http.HttpStatus;
@@ -18,26 +19,33 @@ import vn.student.polyshoes.service.AdminUserService;
 
 import java.util.List;
 
+// Đánh dấu đây là REST controller, xử lý các API liên quan đến admin user
 @RestController
+// Định nghĩa đường dẫn gốc cho các API của controller này
 @RequestMapping("/users")
 public class AdminUserController {
+    // Service xử lý logic liên quan đến admin user
     private final AdminUserService userService;
 
+    // Hàm khởi tạo, inject AdminUserService
     public AdminUserController(AdminUserService userService) {
         this.userService = userService;
     }
 
+    // Lấy danh sách tất cả admin user
     @GetMapping
     public ResponseEntity<List<AdminUserResponse>> getAllUsers() {
         List<AdminUserResponse> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
+    // Tạo mới admin user
     @PostMapping("/create")
     public ResponseEntity<?> createUser(@Valid @RequestBody AdminUserDto userDto, BindingResult result) {
         if (result.hasErrors()) {
             return badRequest(result);
         }
+        // Kiểm tra email đã tồn tại chưa
         if (userService.findByEmail(userDto.getEmail()) != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Error: Email already exists");
         }
@@ -45,6 +53,7 @@ public class AdminUserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
+    // Cập nhật thông tin admin user theo ID
     @PutMapping("/{userId}")
     public ResponseEntity<?> updateUser(@PathVariable String userId, @Valid @RequestBody UpdateAdminUserDto userDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -54,12 +63,14 @@ public class AdminUserController {
         return ResponseEntity.ok(updatedUser);
     }
 
+    // Xóa admin user theo ID
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> deleteUser(@PathVariable String userId) {
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
     }
 
+    // Đổi trạng thái hoạt động của admin user (active/inactive)
     @PutMapping("/{userId}/toggle-status")
     public ResponseEntity<AdminUserResponse> toggleUserStatus(@PathVariable String userId) {
         AdminUserResponse updatedUser = userService.toggleUserStatus(userId);
@@ -74,7 +85,7 @@ public class AdminUserController {
     }
 
 
-    // Cập nhật profile admin hiện tại
+    // Cập nhật profile của admin hiện tại
     @PutMapping("/profile")
     public ResponseEntity<?> updateCurrentProfile(@Valid @RequestBody UpdateAdminProfileDto profileDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -85,7 +96,7 @@ public class AdminUserController {
         return ResponseEntity.ok(updatedProfile);
     }
 
-    // Thay đổi mật khẩu admin theo ID
+    // Đổi mật khẩu cho admin user theo ID
     @PutMapping("/{userId}/change-password")
     public ResponseEntity<?> changePassword(@PathVariable String userId, @Valid @RequestBody ChangePasswordDto changePasswordDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -94,7 +105,7 @@ public class AdminUserController {
         return handleChangePassword(userId, changePasswordDto);
     }
 
-    // Thay đổi mật khẩu của admin hiện tại
+    // Đổi mật khẩu cho admin hiện tại
     @PutMapping("/profile/password")
     public ResponseEntity<?> changeCurrentPassword(@Valid @RequestBody ChangePasswordDto changePasswordDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -108,14 +119,8 @@ public class AdminUserController {
             return ResponseEntity.badRequest().body("Mật khẩu cũ không đúng");
         }
     }
-    // Helper method: get current authenticated user
-    private AdminUserResponse getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserEmail = authentication.getName();
-        return userService.findByEmail(currentUserEmail);
-    }
 
-    // Helper method: handle password change
+    // Hàm hỗ trợ xử lý đổi mật khẩu cho user
     private ResponseEntity<?> handleChangePassword(String userId, ChangePasswordDto changePasswordDto) {
         boolean success = userService.changePassword(userId, changePasswordDto);
         if (success) {
@@ -125,12 +130,12 @@ public class AdminUserController {
         }
     }
 
-    // Helper method: handle bad request with validation errors
+    // Hàm hỗ trợ trả về lỗi khi validate dữ liệu
     private ResponseEntity<?> badRequest(BindingResult result) {
         return ResponseEntity.badRequest().body("Error: " + result.getAllErrors());
     }
 
-    // Upload avatar admin
+    // Upload avatar cho admin user
     @PostMapping("/{userId}/avatar")
     public ResponseEntity<?> uploadAvatar(@PathVariable String userId, @RequestParam("file") MultipartFile file) {
         try {
@@ -141,7 +146,7 @@ public class AdminUserController {
         }
     }
 
-    // Get current user profile
+    // Lấy thông tin profile của admin hiện tại
     @GetMapping("/profile")
     public ResponseEntity<AdminUserResponse> getCurrentProfile() {
         String currentUserEmail = getCurrentUserEmail();
@@ -149,9 +154,10 @@ public class AdminUserController {
         return ResponseEntity.ok(profile);
     }
 
+    // Lấy email của user hiện tại từ context bảo mật
     private String getCurrentUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getName(); // This should return the email
+        return authentication.getName(); // Trả về email của user hiện tại
     }
 
 }

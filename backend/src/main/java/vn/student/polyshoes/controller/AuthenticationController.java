@@ -20,6 +20,7 @@ import vn.student.polyshoes.service.AdminUserService;
 import vn.student.polyshoes.service.AuthenticationService;
 import vn.student.polyshoes.service.JwtService;
 
+// Controller xử lý xác thực và thông tin người dùng đăng nhập
 @RequestMapping("/auth")
 @RestController
 public class AuthenticationController {
@@ -27,12 +28,14 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
     private final AdminUserService adminUserService;
 
+    // Hàm khởi tạo, inject các service cần thiết
     public AuthenticationController(JwtService jwtService, AuthenticationService authenticationService, AdminUserService adminUserService) {
         this.jwtService = jwtService;
         this.authenticationService = authenticationService;
         this.adminUserService = adminUserService;
     }
 
+    // Đăng nhập, trả về JWT token
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto) {
         AdminUser authenticatedUser = authenticationService.authenticate(loginUserDto);
@@ -41,6 +44,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(loginResponse);
     }
     
+    // Lấy thông tin người dùng hiện tại
     @GetMapping("/me")
     public ResponseEntity<AdminUserResponse> getAuthenticatedUser() {
         AdminUser currentUser = getCurrentUser();
@@ -48,6 +52,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(userResponse);
     }
     
+    // Đổi mật khẩu cho người dùng hiện tại
     @PostMapping("/me/password")
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordDto changePasswordDto, BindingResult result) {
         if (result.hasErrors()) {
@@ -58,12 +63,13 @@ public class AuthenticationController {
         return ResponseEntity.noContent().build();
     }
 
+    // Lấy thông tin user hiện tại từ context bảo mật
     private AdminUser getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return (AdminUser) authentication.getPrincipal();
     }
 
-    // Helper method: handle bad request with validation errors
+    // Trả về lỗi khi validate dữ liệu
     private ResponseEntity<?> badRequest(BindingResult result) {
         return ResponseEntity.badRequest().body("Error: " + result.getAllErrors());
     }

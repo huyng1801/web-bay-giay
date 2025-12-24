@@ -302,7 +302,26 @@ const CustomerPage = () => {
                   name="email"
                   rules={[
                     { required: true, message: 'Vui lòng nhập email!' },
-                    { type: 'email', message: 'Email không hợp lệ!' }
+                    { type: 'email', message: 'Email không hợp lệ!' },
+                    {
+                      validator: async (_, value) => {
+                        if (!value) return Promise.resolve();
+                        
+                        // Check if email already exists
+                        const existingCustomer = await CustomerService.getCustomerByEmail(value);
+                        
+                        // If editing, allow same email as current customer
+                        if (editingCustomer && existingCustomer && existingCustomer.customerId === editingCustomer.customerId) {
+                          return Promise.resolve();
+                        }
+                        
+                        if (existingCustomer) {
+                          return Promise.reject(new Error('Email này đã được sử dụng!'));
+                        }
+                        
+                        return Promise.resolve();
+                      }
+                    }
                   ]}
                 >
                   <Input placeholder="Nhập email" style={{ borderRadius: 8 }} />
@@ -317,7 +336,26 @@ const CustomerPage = () => {
                   name="phone"
                   rules={[
                     { required: true, message: 'Vui lòng nhập số điện thoại!' },
-                    { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại không hợp lệ!' }
+                    { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại không hợp lệ!' },
+                    {
+                      validator: async (_, value) => {
+                        if (!value) return Promise.resolve();
+                        
+                        // Check if phone already exists
+                        const existingCustomer = await CustomerService.getCustomerByPhone(value);
+                        
+                        // If editing, allow same phone as current customer
+                        if (editingCustomer && existingCustomer && existingCustomer.customerId === editingCustomer.customerId) {
+                          return Promise.resolve();
+                        }
+                        
+                        if (existingCustomer) {
+                          return Promise.reject(new Error('Số điện thoại này đã được sử dụng!'));
+                        }
+                        
+                        return Promise.resolve();
+                      }
+                    }
                   ]}
                 >
                   <Input placeholder="Nhập số điện thoại" style={{ borderRadius: 8 }} />

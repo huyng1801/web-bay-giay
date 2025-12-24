@@ -67,6 +67,18 @@ public class ProductFeedbackService {
                 .collect(Collectors.toList());
     }
 
+    // Get feedbacks by customer and order
+    public List<ProductFeedbackResponse> getFeedbacksByCustomerAndOrder(Integer customerId, String orderId) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        return productFeedbackRepository.findByCustomerAndOrderAndIsActiveTrue(customer, order)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     public List<ProductFeedbackResponse> getAllFeedbacks() {
         return productFeedbackRepository.findAllActiveOrderByCreatedAtDesc()
                 .stream()

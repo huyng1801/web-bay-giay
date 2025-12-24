@@ -21,15 +21,21 @@ import java.security.SignatureException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // Logger để ghi lại exception
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    // Xử lý tất cả các exception chung
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorMessage> handleException(Exception exception) {
+        // Xác định HTTP status code dựa trên loại exception
         HttpStatus status = determineHttpStatus(exception);
+        // Xác định message phù hợp
         String message = determineMessage(exception);
 
+        // Ghi log exception
         logException(exception);
 
+        // Tạo response với định dạng ErrorMessage
         ErrorMessage errorMessage = new ErrorMessage(
             status.value(),
             new Date(),
@@ -40,6 +46,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorMessage, status);
     }
 
+    // Xử lý exception khi không tìm thấy resource (404)
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorMessage> resourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
         ErrorMessage errorMessage = new ErrorMessage(
@@ -51,48 +58,79 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorMessage, HttpStatus.NOT_FOUND);
     }
 
-    // Exception handling methods
+    // Xác định HTTP status code phù hợp dựa trên loại exception
     private HttpStatus determineHttpStatus(Exception exception) {
+        // Sai thông tin đăng nhập
         if (exception instanceof BadCredentialsException) {
             return HttpStatus.UNAUTHORIZED;
-        } else if (exception instanceof AccountStatusException) {
+        } 
+        // Tài khoản bị khóa
+        else if (exception instanceof AccountStatusException) {
             return HttpStatus.FORBIDDEN;
-        } else if (exception instanceof AccessDeniedException) {
+        } 
+        // Không có quyền truy cập
+        else if (exception instanceof AccessDeniedException) {
             return HttpStatus.FORBIDDEN;
-        } else if (exception instanceof SignatureException) {
+        } 
+        // JWT signature không hợp lệ
+        else if (exception instanceof SignatureException) {
             return HttpStatus.FORBIDDEN;
-        } else if (exception instanceof ExpiredJwtException) {
+        } 
+        // JWT token hết hạn
+        else if (exception instanceof ExpiredJwtException) {
             return HttpStatus.FORBIDDEN;
-        } else if (exception instanceof IOException) {
+        } 
+        // Lỗi xử lý file
+        else if (exception instanceof IOException) {
             return HttpStatus.BAD_REQUEST;
-        } else if (exception instanceof IllegalArgumentException) {
+        } 
+        // Argument không hợp lệ
+        else if (exception instanceof IllegalArgumentException) {
             return HttpStatus.BAD_REQUEST;
-        } else {
+        } 
+        // Lỗi không xác định
+        else {
             return HttpStatus.INTERNAL_SERVER_ERROR;
         }
     }
 
+    // Xác định message phù hợp dựa trên loại exception
     private String determineMessage(Exception exception) {
+        // Sai email hoặc mật khẩu
         if (exception instanceof BadCredentialsException) {
             return "The username or password is incorrect";
-        } else if (exception instanceof AccountStatusException) {
+        } 
+        // Tài khoản bị khóa
+        else if (exception instanceof AccountStatusException) {
             return "The account is locked";
-        } else if (exception instanceof AccessDeniedException) {
+        } 
+        // Không có quyền truy cập
+        else if (exception instanceof AccessDeniedException) {
             return "You are not authorized to access this resource";
-        } else if (exception instanceof SignatureException) {
+        } 
+        // JWT signature không hợp lệ
+        else if (exception instanceof SignatureException) {
             return "The JWT signature is invalid";
-        } else if (exception instanceof ExpiredJwtException) {
+        } 
+        // JWT token hết hạn
+        else if (exception instanceof ExpiredJwtException) {
             return "The JWT token has expired";
-        } else if (exception instanceof IOException) {
+        } 
+        // Lỗi xử lý file
+        else if (exception instanceof IOException) {
             return "Error processing the file";
-        } else if (exception instanceof IllegalArgumentException) {
+        } 
+        // Argument không hợp lệ
+        else if (exception instanceof IllegalArgumentException) {
             return "Invalid argument provided";
-        } else {
+        } 
+        // Lỗi không xác định
+        else {
             return "Unknown internal server error";
         }
     }
 
-
+    // Ghi log exception vào file log
     private void logException(Exception exception) {
         logger.error("Exception occurred: ", exception);
     }

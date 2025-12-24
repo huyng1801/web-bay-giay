@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Button, Drawer } from 'antd';
 import { message } from 'antd';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { MenuOutlined, ShoppingCartOutlined, UserOutlined, CloseOutlined, HeartOutlined } from '@ant-design/icons';
 import { ShoppingOutlined } from '@ant-design/icons';
@@ -223,6 +223,7 @@ const styles = {
 
 const CustomerLayout = ({ children }) => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchValue, setSearchValue] = useState('');
     const [cartCount, setCartCount] = useState(0);
@@ -333,6 +334,11 @@ const CustomerLayout = ({ children }) => {
                             placeholder="Tìm kiếm sản phẩm..."
                             value={searchValue}
                             onChange={(e) => setSearchValue(e.target.value)}
+                            onKeyPress={(e) => {
+                                if (e.key === 'Enter' && searchValue.trim()) {
+                                    navigate(`/product?productName=${encodeURIComponent(searchValue)}`);
+                                }
+                            }}
                             style={styles.searchInput}
                             onFocus={(e) => {
                                 e.target.style.borderColor = '#667eea';

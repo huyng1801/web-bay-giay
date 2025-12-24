@@ -1,3 +1,4 @@
+// Controller quản lý các chức năng liên quan đến khách hàng
 package vn.student.polyshoes.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,14 +14,17 @@ import vn.student.polyshoes.service.CustomerService;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// Đánh dấu đây là REST controller, xử lý các API liên quan đến khách hàng
 @RestController
+// Định nghĩa đường dẫn gốc cho các API của controller này
 @RequestMapping("/customers")
 public class CustomerController {
 
+    // Inject CustomerService để xử lý logic liên quan đến khách hàng
     @Autowired
     private CustomerService customerService;
 
-    // Create a new customer
+    // Tạo mới một khách hàng
     @PostMapping
     public ResponseEntity<?> createCustomer(@RequestBody CustomerDto customerDto) {
         try {
@@ -31,7 +35,7 @@ public class CustomerController {
         }
     }
 
-    // Get all customers
+    // Lấy danh sách tất cả khách hàng
     @GetMapping
     public ResponseEntity<List<CustomerResponse>> getAllCustomers() {
         List<Customer> customers = customerService.getAllCustomers();
@@ -39,14 +43,14 @@ public class CustomerController {
         return ResponseEntity.ok(responseList);
     }
 
-    // Get customer by ID
+    // Lấy thông tin khách hàng theo id
     @GetMapping("/{customerId}")
     public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable Integer customerId) {
         Customer customer = customerService.getCustomerById(customerId);
         return ResponseEntity.ok(toResponse(customer));
     }
 
-    // Update a customer
+    // Cập nhật thông tin khách hàng theo id
     @PutMapping("/{customerId}")
     public ResponseEntity<?> updateCustomer(@PathVariable Integer customerId, @RequestBody CustomerDto customerDto) {
         try {
@@ -57,13 +61,14 @@ public class CustomerController {
         }
     }
 
-    // Delete a customer
+    // Xóa khách hàng theo id
     @DeleteMapping("/{customerId}")
     public ResponseEntity<Void> deleteCustomer(@PathVariable Integer customerId) {
         customerService.deleteCustomer(customerId);
         return ResponseEntity.noContent().build();
     }
 
+    // Đổi trạng thái hoạt động của khách hàng (ẩn/hiện)
     @PutMapping("/{customerId}/toggle-status")
     public ResponseEntity<?> toggleCustomerStatus(@PathVariable Integer customerId) {
         try {
@@ -74,7 +79,7 @@ public class CustomerController {
         }
     }
 
-    // Helper: map Customer to CustomerResponse
+    // Hàm hỗ trợ: chuyển đổi từ Customer sang CustomerResponse
     private CustomerResponse toResponse(Customer customer) {
         CustomerResponse response = new CustomerResponse();
         response.setCustomerId(customer.getCustomerId());

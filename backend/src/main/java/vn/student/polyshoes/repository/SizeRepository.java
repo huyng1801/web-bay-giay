@@ -11,18 +11,22 @@ import vn.student.polyshoes.model.Size;
 
 import java.util.List;
 
+/**
+ * Repository interface để tương tác với dữ liệu Size trong database
+ * Cung cấp các phương thức tìm kiếm, lọc và quản lý kích cỡ chung trong hệ thống
+ */
 @Repository
 public interface SizeRepository extends JpaRepository<Size, Integer> {
     
-    // Tìm tất cả size đang hoạt động (sắp xếp theo số)
+    // Lấy tất cả kích cỡ đang hoạt động, sắp xếp theo giá trị số tăng dần
     @Query("SELECT s FROM Size s WHERE s.isActive = true ORDER BY CAST(s.sizeValue AS int) ASC")
     List<Size> findByIsActiveTrueOrderBySizeValue();
     
-    // Tìm size theo giá trị
+    // Tìm kiếm kích cỡ theo giá trị (không phân biệt chính xác)
     @Query("SELECT s FROM Size s WHERE s.sizeValue LIKE %:sizeValue% ORDER BY CAST(s.sizeValue AS int) ASC")
     List<Size> findBySizeValueContaining(@Param("sizeValue") String sizeValue);
     
-    // Phân trang với tìm kiếm
+    // Lấy danh sách kích cỡ với các bộ lọc và phân trang
     @Query("SELECT s FROM Size s WHERE " +
            "(:sizeValue IS NULL OR s.sizeValue LIKE %:sizeValue%) AND " +
            "(:isActive IS NULL OR s.isActive = :isActive) " +
@@ -31,9 +35,9 @@ public interface SizeRepository extends JpaRepository<Size, Integer> {
                               @Param("isActive") Boolean isActive,
                               Pageable pageable);
     
-    // Kiểm tra size đã tồn tại
+    // Kiểm tra giá trị kích cỡ đã tồn tại hay chưa
     boolean existsBySizeValue(String sizeValue);
     
-    // Kiểm tra size đã tồn tại (trừ ID hiện tại khi update)
+    // Kiểm tra giá trị kích cỡ đã tồn tại (trừ ID hiện tại khi update)
     boolean existsBySizeValueAndSizeIdNot(String sizeValue, Integer sizeId);
 }
