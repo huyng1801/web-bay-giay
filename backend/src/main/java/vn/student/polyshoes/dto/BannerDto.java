@@ -14,16 +14,22 @@ import org.springframework.web.multipart.MultipartFile;
 public class BannerDto {
 
     // Tiêu đề của banner
-    @NotEmpty(message = "Title cannot be empty")
-    @Size(max = 50, message = "Title cannot exceed 50 characters")
+    @NotEmpty(message = "Tiêu đề không được để trống")
+    @Size(max = 50, message = "Tiêu đề không vượt quá 50 ký tự")
     private String title;
 
     // Liên kết (link) khi click vào banner
-    @Size(max = 512, message = "Link cannot exceed 512 characters")
+    @Size(max = 512, message = "Liên kết không vượt quá 512 ký tự")
     private String link;
 
     // Trạng thái hoạt động (mặc định: true)
     private Boolean isActive = true;
+    
+    // ID admin user tạo banner (chỉ dùng cho tạo mới)
+    private String createdByAdminId;
+    
+    // ID admin user cập nhật banner (chỉ dùng cho cập nhật)  
+    private String updatedByAdminId;
 
     // File hình ảnh của banner
     private MultipartFile imageFile;

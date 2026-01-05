@@ -47,7 +47,7 @@ public class AdminUserController {
         }
         // Kiểm tra email đã tồn tại chưa
         if (userService.findByEmail(userDto.getEmail()) != null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error: Email already exists");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Lỗi: Email đã tồn tại");
         }
         AdminUserResponse createdUser = userService.createUser(userDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
@@ -84,7 +84,6 @@ public class AdminUserController {
         return ResponseEntity.ok(user);
     }
 
-
     // Cập nhật profile của admin hiện tại
     @PutMapping("/profile")
     public ResponseEntity<?> updateCurrentProfile(@Valid @RequestBody UpdateAdminProfileDto profileDto, BindingResult result) {
@@ -96,15 +95,6 @@ public class AdminUserController {
         return ResponseEntity.ok(updatedProfile);
     }
 
-    // Đổi mật khẩu cho admin user theo ID
-    @PutMapping("/{userId}/change-password")
-    public ResponseEntity<?> changePassword(@PathVariable String userId, @Valid @RequestBody ChangePasswordDto changePasswordDto, BindingResult result) {
-        if (result.hasErrors()) {
-            return badRequest(result);
-        }
-        return handleChangePassword(userId, changePasswordDto);
-    }
-
     // Đổi mật khẩu cho admin hiện tại
     @PutMapping("/profile/password")
     public ResponseEntity<?> changeCurrentPassword(@Valid @RequestBody ChangePasswordDto changePasswordDto, BindingResult result) {
@@ -113,16 +103,6 @@ public class AdminUserController {
         }
         String currentUserEmail = getCurrentUserEmail();
         boolean success = userService.changeCurrentPassword(currentUserEmail, changePasswordDto);
-        if (success) {
-            return ResponseEntity.ok("Đổi mật khẩu thành công");
-        } else {
-            return ResponseEntity.badRequest().body("Mật khẩu cũ không đúng");
-        }
-    }
-
-    // Hàm hỗ trợ xử lý đổi mật khẩu cho user
-    private ResponseEntity<?> handleChangePassword(String userId, ChangePasswordDto changePasswordDto) {
-        boolean success = userService.changePassword(userId, changePasswordDto);
         if (success) {
             return ResponseEntity.ok("Đổi mật khẩu thành công");
         } else {
@@ -142,7 +122,7 @@ public class AdminUserController {
             String avatarUrl = userService.uploadAvatar(userId, file);
             return ResponseEntity.ok(avatarUrl);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error uploading avatar: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Lỗi khi tải lên ảnh đại diện: " + e.getMessage());
         }
     }
 

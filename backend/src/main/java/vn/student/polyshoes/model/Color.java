@@ -19,7 +19,7 @@ import java.util.Date;
  * Lưu danh sách các màu có sẵn trong hệ thống
  */
 @Entity
-@Table(name = "color")
+@Table(name = "mau_sac")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,24 +28,24 @@ public class Color {
     // ID duy nhất của màu sắc, tự động tăng
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "color_id") 
+    @Column(name = "ma_mau_sac") 
     private Integer colorId;  
 
     // Tên của màu sắc
-    @Column(name = "color_name", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
+    @Column(name = "ten_mau_sac", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
     private String colorName;
 
     // Trạng thái kích hoạt màu sắc
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "trang_thai_kich_hoat", nullable = false)
     private Boolean isActive = true;
     
     // Thời gian tạo màu sắc
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "thoi_gian_tao", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
     
     // Thời gian cập nhật lần cuối
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "thoi_gian_cap_nhat", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 }

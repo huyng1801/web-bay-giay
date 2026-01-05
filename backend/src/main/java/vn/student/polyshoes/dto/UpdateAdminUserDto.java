@@ -17,34 +17,30 @@ import vn.student.polyshoes.enums.Role;
 public class UpdateAdminUserDto {
     
     // Họ và tên quản trị viên
-    @NotBlank(message = "Full name is required")
-    @Size(min = 2, max = 50, message = "Full name must have between 2 and 50 characters")
+        @NotBlank(message = "Họ và tên không được để trống")
+        @Size(min = 2, max = 50, message = "Họ và tên phải từ 2 đến 50 ký tự")
     private String fullName;
 
     // Email của quản trị viên
-    @NotBlank(message = "Email is required")
-    @Email(message = "Please provide a valid email address")
-    @Size(max = 256, message = "Email must not exceed 256 characters")
+        @NotBlank(message = "Email không được để trống")
+        @Email(message = "Email không hợp lệ")
+        @Size(max = 256, message = "Email không vượt quá 256 ký tự")
     private String email;
 
     // Số điện thoại
-    @NotBlank(message = "Phone number is required")
-    @Size(min = 10, max = 15, message = "Phone number must be between 10 and 15 characters")
+        @NotBlank(message = "Số điện thoại không được để trống")
+        @Size(min = 10, max = 15, message = "Số điện thoại phải từ 10 đến 15 ký tự")
     private String phone;
 
-    // Địa chỉ chính
-    @Size(max = 500, message = "Address must not exceed 500 characters")
+    // Địa chỉ
+        @Size(max = 500, message = "Địa chỉ không vượt quá 500 ký tự")
     private String address;
 
-    // Địa chỉ thứ hai
-    @Size(max = 500, message = "Address2 must not exceed 500 characters")
-    private String address2;
-
     // Vai trò của quản trị viên
-    @NotNull(message = "Role is required")
+        @NotNull(message = "Vai trò là bắt buộc")
     private Role role;
 
     // Trạng thái hoạt động
-    @NotNull(message = "Active status is required")
+        @NotNull(message = "Trạng thái hoạt động là bắt buộc")
     private Boolean isActive;
 }

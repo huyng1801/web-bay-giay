@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CategoryDto {
     // Tên của danh mục sản phẩm
-    @NotEmpty(message = "Category name cannot be empty")
-    @Size(max = 50, message = "Category name cannot exceed 50 characters")
+    @NotEmpty(message = "Tên danh mục không được để trống")
+    @Size(max = 50, message = "Tên danh mục không vượt quá 50 ký tự")
     private String categoryName;
     
     // Trạng thái hoạt động (mặc định: true)

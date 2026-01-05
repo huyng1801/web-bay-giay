@@ -6,26 +6,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import vn.student.polyshoes.config.VNPAYConfig;
-import vn.student.polyshoes.dto.GuestDto;
+import vn.student.polyshoes.dto.CustomerDto;
 import vn.student.polyshoes.dto.OrderDto;
 import vn.student.polyshoes.dto.OrderFilterDto;
 import vn.student.polyshoes.dto.OrderItemDto;
-import vn.student.polyshoes.dto.ShippingDto;
 import vn.student.polyshoes.enums.OrderStatus;
 import vn.student.polyshoes.enums.PaymentMethod;
 import vn.student.polyshoes.model.Customer;
-import vn.student.polyshoes.model.Guest;
+import vn.student.polyshoes.model.CustomerAddress;
 import vn.student.polyshoes.model.Order;
 import vn.student.polyshoes.model.OrderItem;
-import vn.student.polyshoes.model.ProductColor;
-import vn.student.polyshoes.model.ProductSize;
-import vn.student.polyshoes.model.Shipping;
+import vn.student.polyshoes.model.ProductDetails;
+import vn.student.polyshoes.enums.CustomerType;
 import vn.student.polyshoes.repository.CustomerRepository;
-import vn.student.polyshoes.repository.GuestRepository;
+import vn.student.polyshoes.repository.CustomerAddressRepository;
 import vn.student.polyshoes.repository.OrderItemRepository;
 import vn.student.polyshoes.repository.OrderRepository;
-import vn.student.polyshoes.repository.ProductColorImageRepository;
-import vn.student.polyshoes.repository.ProductSizeRepository;
+import vn.student.polyshoes.repository.ProductDetailsRepository;
+import vn.student.polyshoes.repository.ProductImageRepository;
 import vn.student.polyshoes.response.OrderFilterResponse;
 import vn.student.polyshoes.response.OrderItemResponse;
 import vn.student.polyshoes.response.OrderResponse;
@@ -54,19 +52,19 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     @Autowired
-    private GuestRepository guestRepository;
-
-    @Autowired
     private OrderRepository orderRepository;
 
     @Autowired
     private CustomerRepository customerRepository;
 
     @Autowired
+    private CustomerAddressRepository customerAddressRepository;
+
+    @Autowired
     private OrderItemRepository orderItemRepository;
 
     @Autowired
-    private ProductSizeRepository productSizeRepository;
+    private ProductDetailsRepository productDetailsRepository;
 
     @Autowired
     private OrderStatusHistoryService orderStatusHistoryService;
@@ -75,18 +73,14 @@ public class OrderService {
     private VoucherService voucherService;
     
     @Autowired
-    private ShippingService shippingService;
-    
-    @Autowired
-    private ProductColorImageRepository productColorImageRepository;
+    private ProductImageRepository productImageRepository;
     
     @Autowired
     private vn.student.polyshoes.repository.AdminUserRepository adminUserRepository;
 
     @Transactional
-    public OrderResponse createOrder(int customerId, GuestDto guestDto, OrderDto orderDto,
+    public OrderResponse createOrder(int customerId, CustomerDto customerDto, OrderDto orderDto,
             List<OrderItemDto> orderItemDtos) {
-        Guest savedGuest = null;
         Customer customer = null;
 
         // Handle the case when customerId is provided
@@ -98,21 +92,31 @@ public class OrderService {
             if (!customer.getIsActive()) {
                 throw new IllegalArgumentException("Tài khoản của bạn đã bị ngừng hoạt động. Không thể đặt hàng.");
             }
-        } else if (guestDto != null) {
-            // Handle the case when guestDto is provided
-            Guest guest = new Guest();
-            guest.setFullName(guestDto.getFullName());
-            guest.setEmail(guestDto.getEmail());
-            guest.setPhone(guestDto.getPhone());
-            guest.setAddress(guestDto.getAddress());
-            guest.setAddress2(guestDto.getAddress2());
-            guest.setCity(guestDto.getCity());
-            guest.setCreatedAt(new Date());
-            guest.setUpdatedAt(new Date());
+        } else if (customerDto != null) {
+            // Handle the case when customerDto is provided (guest customer)
+            customer = new Customer();
+            customer.setFullName(customerDto.getFullName());
+            customer.setEmail(customerDto.getEmail());
+            customer.setPhone(customerDto.getPhone());
+            customer.setCustomerType(CustomerType.GUEST);
+            customer.setIsActive(true);
+            customer.setCreatedAt(new Date());
+            customer.setUpdatedAt(new Date());
 
-            savedGuest = guestRepository.save(guest);
+            // Save guest customer to unified Customer table
+            customer = customerRepository.save(customer);
+            
+            // Create CustomerAddress for guest
+            CustomerAddress customerAddress = new CustomerAddress();
+            customerAddress.setCustomer(customer);
+            customerAddress.setAddress(customerDto.getAddress());
+            customerAddress.setIsDefault(true);
+            customerAddress.setAddressType("HOME");
+            customerAddress.setCreatedAt(new Date());
+            customerAddress.setUpdatedAt(new Date());
+            customerAddressRepository.save(customerAddress);
         } else {
-            throw new IllegalArgumentException("Either customerId or guestDto must be provided");
+            throw new IllegalArgumentException("Either customerId or customerDto must be provided");
         }
 
         // Generate Order ID based on current date and time (ddMMyyyyHHmmss)
@@ -121,8 +125,8 @@ public class OrderService {
         // Create Order entity and map from OrderDto
         Order order = new Order();
         order.setOrderId(orderId);
-        order.setCustomer(customer); // Associate the customer if provided
-        order.setGuest(savedGuest); // Associate the guest if provided
+        order.setCustomer(customer); // Always use customer (could be registered or guest)
+        // Guest entity no longer exists - using unified Customer with CustomerType
         order.setTotalPrice(orderDto.getTotalPrice() != null ? orderDto.getTotalPrice() : calculateTotalPrice(orderItemDtos)); // Use provided total or calculate
         order.setOriginalPrice(orderDto.getOriginalPrice());
         order.setVoucherDiscount(orderDto.getVoucherDiscount());
@@ -136,15 +140,8 @@ public class OrderService {
         
         order.setOrderNote(orderDto.getOrderNote());
         
-        // Set shipping if provided
-        if (orderDto.getShippingId() != null) {
-            ShippingDto shippingDto = shippingService.getShippingById(orderDto.getShippingId()).orElse(null);
-            if (shippingDto != null) {
-                Shipping shipping = new Shipping();
-                shipping.setShippingId(shippingDto.getShippingId());
-                order.setShipping(shipping);
-            }
-        }
+        // Shipping information is now stored directly in Order entity fields
+        // Use OrderShippingService to calculate shipping fees via GHN API
         
         // Set assigned staff if provided
         if (orderDto.getAssignedStaffId() != null && !orderDto.getAssignedStaffId().trim().isEmpty()) {
@@ -173,27 +170,27 @@ public class OrderService {
 
         // Map and save order items from OrderItemDto
         List<OrderItem> orderItems = orderItemDtos.stream().map(orderItemDto -> {
-            ProductSize productSize = productSizeRepository.findById(orderItemDto.getProductSizeId())
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid product size ID"));
+            ProductDetails productDetails = productDetailsRepository.findById(orderItemDto.getProductDetailsId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid product details ID"));
 
             // Only check and reduce stock if not skipping stock reduction
             if (!orderDto.isSkipStockReduction()) {
                 // Check if there's enough stock
-                if (productSize.getStockQuantity() < orderItemDto.getQuantity()) {
-                    throw new IllegalArgumentException("Not enough stock for product size ID: " +
-                            productSize.getProductSizeId() +
-                            ". Available: " + productSize.getStockQuantity() +
+                if (productDetails.getStockQuantity() < orderItemDto.getQuantity()) {
+                    throw new IllegalArgumentException("Not enough stock for product details ID: " +
+                            productDetails.getProductDetailsId() +
+                            ". Available: " + productDetails.getStockQuantity() +
                             ", Requested: " + orderItemDto.getQuantity());
                 }
 
                 // Reduce stock quantity
-                productSize.setStockQuantity(productSize.getStockQuantity() - orderItemDto.getQuantity());
-                productSizeRepository.save(productSize);
+                productDetails.setStockQuantity(productDetails.getStockQuantity() - orderItemDto.getQuantity());
+                productDetailsRepository.save(productDetails);
             }
 
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(savedOrder);
-            orderItem.setProductSize(productSize);
+            orderItem.setProductDetails(productDetails);
             orderItem.setQuantity(orderItemDto.getQuantity());
             orderItem.setUnitPrice(orderItemDto.getPrice());
             return orderItem;
@@ -203,8 +200,7 @@ public class OrderService {
         orderItemRepository.saveAll(orderItems);
 
         // Ghi lại lịch sử trạng thái đơn hàng
-        String changedBy = customer != null ? customer.getFullName()
-                : (savedGuest != null ? savedGuest.getFullName() : "Khách vãng lai");
+        String changedBy = customer != null ? customer.getFullName() : "Khách vãng lai";
         
         if (paymentMethod == PaymentMethod.IN_STORE || paymentMethod == PaymentMethod.QR_CODE) {
             // Đơn hàng tại cửa hàng: ghi lịch sử trực tiếp đến DELIVERED
@@ -268,7 +264,7 @@ public class OrderService {
         }
 
         // Return an OrderResponse
-        return mapOrderToResponse(savedOrder, savedGuest, customer);
+        return mapOrderToResponse(savedOrder, customer);
     }
 
     private String generateOrderId() {
@@ -293,7 +289,7 @@ public class OrderService {
                 .sum();
     }
 
-    private OrderResponse mapOrderToResponse(Order savedOrder, Guest savedGuest, Customer customer) {
+    private OrderResponse mapOrderToResponse(Order savedOrder, Customer customer) {
         // Map savedOrder to OrderResponse
         OrderResponse orderResponse = new OrderResponse();
 
@@ -319,36 +315,31 @@ public class OrderService {
             // Set payment status
             orderResponse.setPaid(savedOrder.getIsPaid() != null ? savedOrder.getIsPaid() : false);
 
-            // Map guest or customer information based on association
-            if (savedGuest != null) {
-                orderResponse.setGuestName(savedGuest.getFullName());
-                orderResponse.setGuestEmail(savedGuest.getEmail());
-                orderResponse.setGuestPhone(savedGuest.getPhone());
-                // Add shipping address from guest
-                orderResponse.setShippingAddress(savedGuest.getAddress());
-                orderResponse.setShippingAddress2(savedGuest.getAddress2());
-                orderResponse.setShippingCity(savedGuest.getCity());
+            // Map customer information - all customers (registered and guest) are in unified Customer table
+            Customer orderCustomer = savedOrder.getCustomer();
+            if (orderCustomer != null) {
+                if (orderCustomer.getCustomerType() == CustomerType.GUEST) {
+                    // Guest customer information
+                    orderResponse.setGuestName(orderCustomer.getFullName());
+                    orderResponse.setGuestEmail(orderCustomer.getEmail());
+                    orderResponse.setGuestPhone(orderCustomer.getPhone());
+                    
+                    // Get shipping address from CustomerAddress table
+                    // Note: For guests, address is stored in CustomerAddress table
+                    // This would need to be fetched separately if needed
+                } else {
+                    // Registered customer information handled elsewhere
+                }
             }
             if (customer != null) {
                 orderResponse.setCustomerName(customer.getFullName());
                 orderResponse.setCustomerEmail(customer.getEmail());
                 orderResponse.setCustomerPhone(customer.getPhone());
-                // Add shipping address from customer
-                orderResponse.setShippingAddress(customer.getAddress());
-                orderResponse.setShippingAddress2(customer.getAddress2());
-                orderResponse.setShippingCity(customer.getCity());
             }
             
-            // Map shipping information
-            if (savedOrder.getShipping() != null) {
-                ShippingDto shippingDto = shippingService.getShippingById(savedOrder.getShipping().getShippingId()).orElse(null);
-                if (shippingDto != null) {
-                    orderResponse.setShippingId(shippingDto.getShippingId());
-                    orderResponse.setShippingName(shippingDto.getShippingName());
-                    orderResponse.setShippingFee(shippingDto.getShippingFee());
-                    orderResponse.setDeliveryTime(shippingDto.getDeliveryTime());
-                }
-            }
+            // Map shipping information from Order entity
+            orderResponse.setShippingFee(savedOrder.getShippingFee() != null ? savedOrder.getShippingFee().intValue() : 0);
+            // Shipping address will be set from customer information if available
             
             // Map assigned staff information
             if (savedOrder.getAssignedStaff() != null) {
@@ -385,7 +376,7 @@ public class OrderService {
         return orderRepository.findAllOrderByCreatedAtDesc().stream()
                 .map(order -> {
                     // Explicitly pass null for customer when no customer exists for the order
-                    return mapOrderToResponse(order, order.getGuest(), order.getCustomer());
+                    return mapOrderToResponse(order, order.getCustomer());
                 })
                 .collect(Collectors.toList());
     }
@@ -427,7 +418,7 @@ public class OrderService {
 
         // Convert to OrderResponse
         List<OrderResponse> orderResponses = paginatedOrders.stream()
-                .map(order -> mapOrderToResponse(order, order.getGuest(), order.getCustomer()))
+                .map(order -> mapOrderToResponse(order, order.getCustomer()))
                 .collect(Collectors.toList());
 
         // Calculate pagination info
@@ -464,9 +455,10 @@ public class OrderService {
                 matchesSearch = true;
             }
 
-            // Check guest name
-            if (order.getGuest() != null && order.getGuest().getFullName() != null 
-                    && order.getGuest().getFullName().toLowerCase().contains(searchText)) {
+            // Check guest customer name (unified Customer with CustomerType.GUEST)
+            if (order.getCustomer() != null && order.getCustomer().getCustomerType() == CustomerType.GUEST 
+                    && order.getCustomer().getFullName() != null
+                    && order.getCustomer().getFullName().toLowerCase().contains(searchText)) {
                 matchesSearch = true;
             }
 
@@ -476,9 +468,10 @@ public class OrderService {
                 matchesSearch = true;
             }
 
-            // Check guest phone
-            if (order.getGuest() != null && order.getGuest().getPhone() != null 
-                    && order.getGuest().getPhone().contains(searchText)) {
+            // Check guest customer phone (unified Customer with CustomerType.GUEST)
+            if (order.getCustomer() != null && order.getCustomer().getCustomerType() == CustomerType.GUEST
+                    && order.getCustomer().getPhone() != null
+                    && order.getCustomer().getPhone().contains(searchText)) {
                 matchesSearch = true;
             }
 
@@ -628,7 +621,7 @@ public class OrderService {
                     })
                     .map(order -> {
                         try {
-                            return mapOrderToResponse(order, order.getGuest(), order.getCustomer());
+                            return mapOrderToResponse(order, order.getCustomer());
                         } catch (Exception e) {
                             System.err.println("Error mapping order " + order.getOrderId() + ": " + e.getMessage());
                             e.printStackTrace();
@@ -646,8 +639,8 @@ public class OrderService {
     public OrderResponse getOrderById(String orderId) {
         return orderRepository.findById(orderId)
                 .map(order -> {
-                    // Explicitly pass null for customer when no customer exists for the order
-                    return mapOrderToResponse(order, order.getGuest(), order.getCustomer());
+                    // Use unified customer system
+                    return mapOrderToResponse(order, order.getCustomer());
                 })
                 .orElse(null);
     }
@@ -660,49 +653,45 @@ public class OrderService {
                 throw new IllegalArgumentException("OrderItem cannot be null");
             }
 
-            if (orderItem.getProductSize() == null) {
-                throw new IllegalArgumentException("ProductSize cannot be null for order item");
+            if (orderItem.getProductDetails() == null) {
+                throw new IllegalArgumentException("ProductDetails cannot be null for order item");
             }
 
-            if (orderItem.getProductSize().getProductColor() == null) {
-                throw new IllegalArgumentException("ProductColor cannot be null for order item");
-            }
-
-            if (orderItem.getProductSize().getProductColor().getProduct() == null) {
+            if (orderItem.getProductDetails().getProduct() == null) {
                 throw new IllegalArgumentException("Product cannot be null for order item");
             }
 
             orderItemResponse
-                    .setProductName(orderItem.getProductSize().getProductColor().getProduct().getProductName());
-            orderItemResponse.setColorName(orderItem.getProductSize().getProductColor().getColorName());
-            orderItemResponse.setSizeValue(orderItem.getProductSize().getSizeValue());
+                    .setProductName(orderItem.getProductDetails().getProduct().getProductName());
+            orderItemResponse.setColorName(orderItem.getProductDetails().getColor().getColorName());
+            orderItemResponse.setSizeValue(orderItem.getProductDetails().getSize().getSizeValue());
             orderItemResponse.setQuantity(orderItem.getQuantity());
             orderItemResponse.setUnitPrice(orderItem.getUnitPrice());
 
             // Set product ID
-            orderItemResponse.setProductId(orderItem.getProductSize().getProductColor().getProduct().getProductId());
+            orderItemResponse.setProductId(orderItem.getProductDetails().getProduct().getProductId());
 
-            // Set image URL from product color images (first image if available, fallback to product color image)
-            ProductColor productColor = orderItem.getProductSize().getProductColor();
+            // Set image URL from product images (get main image)
             String imageUrl = null;
             
-            // Try to get first image from ProductColorImage collection
+            // Get main image from ProductImage collection
             try {
-                var productColorImages = productColorImageRepository.findAll()
-                    .stream()
-                    .filter(img -> img.getProductColor().getProductColorId().equals(productColor.getProductColorId()))
-                    .findFirst();
+                var productImages = productImageRepository.findByProductId(
+                    orderItem.getProductDetails().getProduct().getProductId());
                 
-                if (productColorImages.isPresent()) {
-                    imageUrl = productColorImages.get().getImageUrl();
+                // Try to find main image
+                var mainImage = productImages.stream()
+                        .filter(img -> img.getIsMainImage() != null && img.getIsMainImage())
+                        .findFirst();
+                
+                if (mainImage.isPresent()) {
+                    imageUrl = mainImage.get().getImageUrl();
+                } else if (!productImages.isEmpty()) {
+                    // Fallback to first image if no main image found
+                    imageUrl = productImages.get(0).getImageUrl();
                 }
             } catch (Exception e) {
-                System.err.println("Error fetching product color images: " + e.getMessage());
-            }
-            
-            // Fallback to ProductColor imageUrl if no images found
-            if (imageUrl == null || imageUrl.isEmpty()) {
-                imageUrl = productColor.getImageUrl();
+                System.err.println("Error fetching product images: " + e.getMessage());
             }
             
             // Add BASE_URL if needed
@@ -769,7 +758,7 @@ public class OrderService {
         order.setUpdatedAt(new java.util.Date());
         // Optionally update other fields (add as needed)
         Order savedOrder = orderRepository.save(order);
-        return mapOrderToResponse(savedOrder, order.getGuest(), order.getCustomer());
+        return mapOrderToResponse(savedOrder, savedOrder.getCustomer());
     }
     
     public OrderResponse updateStaffAssignment(String orderId, String staffId) {
@@ -786,7 +775,7 @@ public class OrderService {
         
         order.setUpdatedAt(new Date());
         Order savedOrder = orderRepository.save(order);
-        return mapOrderToResponse(savedOrder, order.getGuest(), order.getCustomer());
+        return mapOrderToResponse(savedOrder, savedOrder.getCustomer());
     }
     
     public OrderResponse processReturnOrder(String orderId, String reason) {
@@ -820,13 +809,13 @@ public class OrderService {
         // Restore stock for returned items
         if (savedOrder.getOrderItems() != null) {
             for (OrderItem item : savedOrder.getOrderItems()) {
-                ProductSize productSize = item.getProductSize();
-                productSize.setStockQuantity(productSize.getStockQuantity() + item.getQuantity());
-                productSizeRepository.save(productSize);
+                ProductDetails productDetails = item.getProductDetails();
+                productDetails.setStockQuantity(productDetails.getStockQuantity() + item.getQuantity());
+                productDetailsRepository.save(productDetails);
             }
         }
         
-        return mapOrderToResponse(savedOrder, order.getGuest(), order.getCustomer());
+        return mapOrderToResponse(savedOrder, savedOrder.getCustomer());
     }
     
     public OrderResponse cancelOrder(String orderId, String reason, boolean isAdmin) {
@@ -880,13 +869,13 @@ public class OrderService {
         // Restore stock for canceled items
         if (savedOrder.getOrderItems() != null) {
             for (OrderItem item : savedOrder.getOrderItems()) {
-                ProductSize productSize = item.getProductSize();
-                productSize.setStockQuantity(productSize.getStockQuantity() + item.getQuantity());
-                productSizeRepository.save(productSize);
+                ProductDetails productDetails = item.getProductDetails();
+                productDetails.setStockQuantity(productDetails.getStockQuantity() + item.getQuantity());
+                productDetailsRepository.save(productDetails);
             }
         }
         
-        return mapOrderToResponse(savedOrder, order.getGuest(), order.getCustomer());
+        return mapOrderToResponse(savedOrder, savedOrder.getCustomer());
     }
 
     public String createVNPayPaymentUrl(String orderId, long amount) {
@@ -985,30 +974,30 @@ public class OrderService {
         order.setUpdatedAt(new Date());
 
         Order savedOrder = orderRepository.save(order);
-        return mapOrderToResponse(savedOrder, order.getGuest(), order.getCustomer());
+        return mapOrderToResponse(savedOrder, savedOrder.getCustomer());
     }
 
     private void restoreStock(Order order) {
         List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
         for (OrderItem item : orderItems) {
-            ProductSize productSize = item.getProductSize();
-            productSize.setStockQuantity(productSize.getStockQuantity() + item.getQuantity());
-            productSizeRepository.save(productSize);
+            ProductDetails productDetails = item.getProductDetails();
+            productDetails.setStockQuantity(productDetails.getStockQuantity() + item.getQuantity());
+            productDetailsRepository.save(productDetails);
         }
     }
 
     private void reduceStock(Order order) {
         List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
         for (OrderItem item : orderItems) {
-            ProductSize productSize = item.getProductSize();
-            if (productSize.getStockQuantity() < item.getQuantity()) {
-                throw new IllegalArgumentException("Not enough stock to process order. Product Size ID: " +
-                        productSize.getProductSizeId() +
-                        ". Available: " + productSize.getStockQuantity() +
+            ProductDetails productDetails = item.getProductDetails();
+            if (productDetails.getStockQuantity() < item.getQuantity()) {
+                throw new IllegalArgumentException("Not enough stock to process order. Product Details ID: " +
+                        productDetails.getProductDetailsId() +
+                        ". Available: " + productDetails.getStockQuantity() +
                         ", Required: " + item.getQuantity());
             }
-            productSize.setStockQuantity(productSize.getStockQuantity() - item.getQuantity());
-            productSizeRepository.save(productSize);
+            productDetails.setStockQuantity(productDetails.getStockQuantity() - item.getQuantity());
+            productDetailsRepository.save(productDetails);
         }
     }
 
@@ -1027,7 +1016,7 @@ public class OrderService {
         Order updatedOrder = orderRepository.save(order);
 
         // Return the updated order response
-        return mapOrderToResponse(updatedOrder, updatedOrder.getGuest(), updatedOrder.getCustomer());
+        return mapOrderToResponse(updatedOrder, updatedOrder.getCustomer());
     }
 
     // Cập nhật trạng thái đơn hàng với ghi lại lịch sử
@@ -1098,7 +1087,7 @@ public class OrderService {
                 changeReason != null ? changeReason : "Cập nhật trạng thái đơn hàng",
                 ipAddress != null ? ipAddress : "127.0.0.1");
 
-        return mapOrderToResponse(updatedOrder, updatedOrder.getGuest(), updatedOrder.getCustomer());
+        return mapOrderToResponse(updatedOrder, updatedOrder.getCustomer());
     }
     
     /**

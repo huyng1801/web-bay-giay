@@ -26,19 +26,10 @@ public class StatisticService {
     private OrderItemRepository orderItemRepository;
 
     @Autowired
-    private CategoryRepository categoryRepository;
-
+    private SubCategoryRepository subCategoryRepository;
+    
     @Autowired
-    private BannerRepository bannerRepository;
-
-    @Autowired
-    private BrandRepository brandRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private CustomerRepository customerRepository;
+    private vn.student.polyshoes.repository.BannerRepository bannerRepository;
 
     public Map<String, Object> getStatisticsToday() {
         try {
@@ -137,7 +128,7 @@ public class StatisticService {
         for (Order order : orders) {
             List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
             for (OrderItem item : orderItems) {
-                String categoryName = item.getProductSize().getProductColor().getProduct().getSubCategory().getCategory().getCategoryName();
+                String categoryName = item.getProductDetails().getProduct().getSubCategory().getCategory().getCategoryName();
                 categoryQuantities.put(categoryName, categoryQuantities.getOrDefault(categoryName, 0) + item.getQuantity());
             }
         }
@@ -161,9 +152,9 @@ public class StatisticService {
                     uniqueCustomers.add(order.getCustomer().getCustomerId());
                 }
                 
-                // Cộng phí vận chuyển
-                if (order.getShipping() != null && order.getShipping().getShippingFee() != null) {
-                    totalShippingFee += order.getShipping().getShippingFee();
+                // Cộng phí vận chuyển từ Order entity
+                if (order.getShippingFee() != null) {
+                    totalShippingFee += order.getShippingFee();
                 }
                 
                 // Cộng voucher discount
@@ -487,7 +478,12 @@ public class StatisticService {
     // Helper methods để tính toán theo period thay vì tổng hệ thống
     private int calculateBannersInPeriod(List<Order> orders) {
         // Banner không liên quan trực tiếp đến đơn hàng, trả về tổng banner active
-        return (int) bannerRepository.count();
+        try {
+            return (int) bannerRepository.count();
+        } catch (Exception e) {
+            logger.warn("Error counting banners: {}", e.getMessage());
+            return 0;
+        }
     }
     
     private int calculateBrandsInPeriod(List<Order> orders) {
@@ -496,11 +492,10 @@ public class StatisticService {
             if (order != null) {
                 List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
                 for (OrderItem item : orderItems) {
-                    if (item != null && item.getProductSize() != null 
-                        && item.getProductSize().getProductColor() != null
-                        && item.getProductSize().getProductColor().getProduct() != null
-                        && item.getProductSize().getProductColor().getProduct().getBrand() != null) {
-                        brandIds.add(item.getProductSize().getProductColor().getProduct().getBrand().getBrandId());
+                    if (item != null && item.getProductDetails() != null 
+                        && item.getProductDetails().getProduct() != null
+                        && item.getProductDetails().getProduct().getBrand() != null) {
+                        brandIds.add(item.getProductDetails().getProduct().getBrand().getBrandId());
                     }
                 }
             }
@@ -514,12 +509,11 @@ public class StatisticService {
             if (order != null) {
                 List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
                 for (OrderItem item : orderItems) {
-                    if (item != null && item.getProductSize() != null 
-                        && item.getProductSize().getProductColor() != null
-                        && item.getProductSize().getProductColor().getProduct() != null
-                        && item.getProductSize().getProductColor().getProduct().getSubCategory() != null
-                        && item.getProductSize().getProductColor().getProduct().getSubCategory().getCategory() != null) {
-                        categoryIds.add(item.getProductSize().getProductColor().getProduct().getSubCategory().getCategory().getCategoryId());
+                    if (item != null && item.getProductDetails() != null 
+                        && item.getProductDetails().getProduct() != null
+                        && item.getProductDetails().getProduct().getSubCategory() != null
+                        && item.getProductDetails().getProduct().getSubCategory().getCategory() != null) {
+                        categoryIds.add(item.getProductDetails().getProduct().getSubCategory().getCategory().getCategoryId());
                     }
                 }
             }
@@ -533,10 +527,9 @@ public class StatisticService {
             if (order != null) {
                 List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
                 for (OrderItem item : orderItems) {
-                    if (item != null && item.getProductSize() != null 
-                        && item.getProductSize().getProductColor() != null
-                        && item.getProductSize().getProductColor().getProduct() != null) {
-                        productIds.add(item.getProductSize().getProductColor().getProduct().getProductId());
+                    if (item != null && item.getProductDetails() != null 
+                        && item.getProductDetails().getProduct() != null) {
+                        productIds.add(item.getProductDetails().getProduct().getProductId());
                     }
                 }
             }
@@ -554,11 +547,10 @@ public class StatisticService {
             if (order != null) {
                 List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
                 for (OrderItem item : orderItems) {
-                    if (item != null && item.getProductSize() != null 
-                        && item.getProductSize().getProductColor() != null
-                        && item.getProductSize().getProductColor().getProduct() != null) {
+                    if (item != null && item.getProductDetails() != null 
+                        && item.getProductDetails().getProduct() != null) {
                         
-                        Product product = item.getProductSize().getProductColor().getProduct();
+                        Product product = item.getProductDetails().getProduct();
                         Integer productId = product.getProductId();
                         Integer quantity = item.getQuantity();
                         

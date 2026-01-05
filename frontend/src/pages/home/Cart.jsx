@@ -18,9 +18,10 @@ import CustomerLayout from '../../layouts/CustomerLayout';
 import { useNavigate } from 'react-router-dom';
 import { 
     getProductById,
-    getProductColorsByProductId,
-    getSizesByProductColorId,
-    getImagesByProductColorId
+    getProductDetailsByProductId,
+    getAvailableColorsByProductId,
+    getAvailableSizesByProductAndColor,
+    getProductImages
 } from '../../services/home/HomeService';
 
 const { Title, Text } = Typography;
@@ -377,6 +378,7 @@ const Cart = () => {
     const [hoveredButton, setHoveredButton] = useState(null);
     const [loading, setLoading] = useState(true);
     const [productDetails, setProductDetails] = useState({});
+    const [imageErrors, setImageErrors] = useState({});
     const navigate = useNavigate();
 
     const formatPrice = (price) => {
@@ -386,6 +388,13 @@ const Cart = () => {
         }).format(price).replace('₫', 'VNĐ');
     };
 
+    const handleImageError = (productId) => {
+        setImageErrors(prev => ({
+            ...prev,
+            [productId]: true
+        }));
+    };
+
     useEffect(() => {
         const fetchCartDetails = async () => {
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -393,25 +402,29 @@ const Cart = () => {
 
             try {
                 await Promise.all(cart.map(async (item) => {
-                    const [product, colors] = await Promise.all([
+                    const [product, productDetails, productImages] = await Promise.all([
                         getProductById(item.productId),
-                        getProductColorsByProductId(item.productId)
+                        getProductDetailsByProductId(item.productId),
+                        getProductImages(item.productId)
                     ]);
 
-                    const selectedColor = colors.find(color => color.productColorId === item.colorId);
-                    
-                    const [sizes] = await Promise.all([
-                        getSizesByProductColorId(item.colorId),
-                      
-                    ]);
+                    // Find the specific product detail that matches this cart item
+                    const selectedDetail = productDetails.find(detail => 
+                        detail.color.colorId === item.colorId && detail.size.sizeId === item.sizeId
+                    );
 
-                    const selectedSize = sizes.find(size => size.productSizeId === item.sizeId);
+                    // Get main image or first image from product images
+                    let imageUrl = product.mainImageUrl || '/placeholder-image.jpg';
+                    if (productImages && productImages.length > 0) {
+                        const mainImage = productImages.find(img => img.isMainImage);
+                        imageUrl = mainImage?.imageUrl || productImages[0]?.imageUrl || '/placeholder-image.jpg';
+                    }
 
                     details[item.productId] = {
                         ...product,
-                        colorName: selectedColor?.colorName || 'N/A',
-                        sizeValue: selectedSize?.sizeValue || 'N/A',
-                        imageUrl: selectedColor.imageUrl
+                        colorName: selectedDetail?.color?.colorName || selectedDetail?.color?.tenMau || 'N/A',
+                        sizeValue: selectedDetail?.size?.sizeValue || selectedDetail?.size?.giaTri || 'N/A',
+                        imageUrl: imageUrl
                     };
                 }));
 
@@ -535,11 +548,24 @@ const Cart = () => {
                                         >
                                             <Row gutter={16} align="middle" style={{ padding: '20px' }}>
                                                 <Col xs={24} sm={6}>
-                                                    <img
-                                                        src={details.imageUrl || 'placeholder.jpg'}
-                                                        alt={details.productName}
-                                                        style={styles.itemImage}
-                                                    />
+                                                    {imageErrors[item.productId] ? (
+                                                        <div style={{
+                                                            ...styles.itemImage,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            background: '#f4f6fb'
+                                                        }}>
+                                                            <ShoppingCartOutlined style={{ fontSize: '48px', color: '#ccc' }} />
+                                                        </div>
+                                                    ) : (
+                                                        <img
+                                                            src={details.imageUrl || 'placeholder.jpg'}
+                                                            alt={details.productName}
+                                                            style={styles.itemImage}
+                                                            onError={() => handleImageError(item.productId)}
+                                                        />
+                                                    )}
                                                 </Col>
                                                 <Col xs={24} sm={18}>
                                                     <div style={styles.itemDetails}>

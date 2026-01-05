@@ -12,12 +12,12 @@ import vn.student.polyshoes.enums.Gender;
 import vn.student.polyshoes.exception.ResourceNotFoundException;
 import vn.student.polyshoes.model.Brand;
 import vn.student.polyshoes.model.Product;
-import vn.student.polyshoes.model.ProductColor;
+import vn.student.polyshoes.model.ProductDetails;
 import vn.student.polyshoes.model.SubCategory;
 import vn.student.polyshoes.repository.BrandRepository;
-import vn.student.polyshoes.repository.ProductColorRepository;
+import vn.student.polyshoes.repository.ProductDetailsRepository;
 import vn.student.polyshoes.repository.ProductRepository;
-import vn.student.polyshoes.repository.ProductSizeRepository;
+import vn.student.polyshoes.repository.ProductImageRepository;
 import vn.student.polyshoes.repository.SubCategoryRepository;
 import vn.student.polyshoes.response.ProductResponse;
 
@@ -34,28 +34,31 @@ public class ProductService {
     private SubCategoryRepository subCategoryRepository;
 
     @Autowired
-    private ProductColorRepository productColorRepository;
-    
+    private ProductDetailsRepository productDetailsRepository;
+
     @Autowired
-    private ProductSizeRepository productSizeRepository;
-    
+    private ProductImageRepository productImageRepository;
+
     private static final String BASE_URL = "http://localhost:8080/uploads/";
+
     public ProductResponse createProduct(ProductDto productDto) {
-    Brand brand = brandRepository.findById(productDto.getBrandId())
-        .orElseThrow(() -> new ResourceNotFoundException("Brand not found with ID: " + productDto.getBrandId()));
-    SubCategory subCategory = subCategoryRepository.findById(productDto.getSubCategoryId())
-        .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with ID: " + productDto.getSubCategoryId()));
-    Product product = new Product();
-    product.setProductName(productDto.getProductName());
-    product.setDescription(productDto.getDescription());
-    product.setSellingPrice(productDto.getSellingPrice());
-    product.setDiscountPercentage(productDto.getDiscountPercentage());
-    product.setBrand(brand);
-    product.setSubCategory(subCategory);
-    Date now = new Date();
-    product.setCreatedAt(now);
-    product.setUpdatedAt(now);
-    return mapToResponse(productRepository.save(product));
+        Brand brand = brandRepository.findById(productDto.getBrandId())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Brand not found with ID: " + productDto.getBrandId()));
+        SubCategory subCategory = subCategoryRepository.findById(productDto.getSubCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "SubCategory not found with ID: " + productDto.getSubCategoryId()));
+        Product product = new Product();
+        product.setProductName(productDto.getProductName());
+        product.setDescription(productDto.getDescription());
+        product.setSellingPrice(productDto.getSellingPrice());
+        product.setDiscountPercentage(productDto.getDiscountPercentage());
+        product.setBrand(brand);
+        product.setSubCategory(subCategory);
+        Date now = new Date();
+        product.setCreatedAt(now);
+        product.setUpdatedAt(now);
+        return mapToResponse(productRepository.save(product));
     }
 
     public ProductResponse getProductById(Integer productId) {
@@ -65,20 +68,22 @@ public class ProductService {
     }
 
     public ProductResponse updateProduct(Integer productId, ProductDto productDto) {
-    Product product = productRepository.findById(productId)
-        .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-    Brand brand = brandRepository.findById(productDto.getBrandId())
-        .orElseThrow(() -> new ResourceNotFoundException("Brand not found with ID: " + productDto.getBrandId()));
-    SubCategory subCategory = subCategoryRepository.findById(productDto.getSubCategoryId())
-        .orElseThrow(() -> new ResourceNotFoundException("SubCategory not found with ID: " + productDto.getSubCategoryId()));
-    product.setProductName(productDto.getProductName());
-    product.setDescription(productDto.getDescription());
-    product.setSellingPrice(productDto.getSellingPrice());
-    product.setDiscountPercentage(productDto.getDiscountPercentage());
-    product.setBrand(brand);
-    product.setSubCategory(subCategory);
-    product.setUpdatedAt(new Date());
-    return mapToResponse(productRepository.save(product));
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        Brand brand = brandRepository.findById(productDto.getBrandId())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Brand not found with ID: " + productDto.getBrandId()));
+        SubCategory subCategory = subCategoryRepository.findById(productDto.getSubCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "SubCategory not found with ID: " + productDto.getSubCategoryId()));
+        product.setProductName(productDto.getProductName());
+        product.setDescription(productDto.getDescription());
+        product.setSellingPrice(productDto.getSellingPrice());
+        product.setDiscountPercentage(productDto.getDiscountPercentage());
+        product.setBrand(brand);
+        product.setSubCategory(subCategory);
+        product.setUpdatedAt(new Date());
+        return mapToResponse(productRepository.save(product));
     }
 
     public void deleteProduct(Integer productId) {
@@ -111,14 +116,14 @@ public class ProductService {
         if (subCategoryId != null) {
             products = products.stream()
                     .filter(product -> product.getSubCategory() != null &&
-                                      product.getSubCategory().getSubCategoryId().equals(subCategoryId))
+                            product.getSubCategory().getSubCategoryId().equals(subCategoryId))
                     .collect(Collectors.toList());
         }
         if (gender != null) {
             products = products.stream()
                     .filter(product -> product.getSubCategory() != null &&
-                                      product.getSubCategory().getGender() != null &&
-                                      product.getSubCategory().getGender().equals(gender))
+                            product.getSubCategory().getGender() != null &&
+                            product.getSubCategory().getGender().equals(gender))
                     .collect(Collectors.toList());
         }
         if (productName != null && !productName.isEmpty()) {
@@ -132,49 +137,49 @@ public class ProductService {
     }
 
     // AI-enhanced search method with GET parameters
-    public List<ProductResponse> searchProducts(String query, Integer subCategoryId, Integer brandId, 
-                                              Double minPrice, Double maxPrice, Boolean isActive, Boolean aiEnhanced) {
+    public List<ProductResponse> searchProducts(String query, Integer subCategoryId, Integer brandId,
+            Double minPrice, Double maxPrice, Boolean isActive, Boolean aiEnhanced) {
         List<Product> products = productRepository.findAll();
-        
+
         // Filter by query (search in product name and description)
         if (query != null && !query.trim().isEmpty()) {
             String lowerQuery = query.toLowerCase().trim();
             products = products.stream()
                     .filter(product -> {
                         boolean nameMatch = product.getProductName().toLowerCase().contains(lowerQuery);
-                        boolean descMatch = product.getDescription() != null && 
-                                          product.getDescription().toLowerCase().contains(lowerQuery);
-                        
+                        boolean descMatch = product.getDescription() != null &&
+                                product.getDescription().toLowerCase().contains(lowerQuery);
+
                         // AI-enhanced search: also match brand and category names
                         if (aiEnhanced) {
-                            boolean brandMatch = product.getBrand() != null && 
-                                               product.getBrand().getBrandName().toLowerCase().contains(lowerQuery);
-                            boolean categoryMatch = product.getSubCategory() != null && 
-                                                  product.getSubCategory().getSubCategoryName().toLowerCase().contains(lowerQuery);
+                            boolean brandMatch = product.getBrand() != null &&
+                                    product.getBrand().getBrandName().toLowerCase().contains(lowerQuery);
+                            boolean categoryMatch = product.getSubCategory() != null &&
+                                    product.getSubCategory().getSubCategoryName().toLowerCase().contains(lowerQuery);
                             return nameMatch || descMatch || brandMatch || categoryMatch;
                         }
-                        
+
                         return nameMatch || descMatch;
                     })
                     .collect(Collectors.toList());
         }
-        
+
         // Filter by subcategory
         if (subCategoryId != null) {
             products = products.stream()
                     .filter(product -> product.getSubCategory() != null &&
-                                      product.getSubCategory().getSubCategoryId().equals(subCategoryId))
+                            product.getSubCategory().getSubCategoryId().equals(subCategoryId))
                     .collect(Collectors.toList());
         }
-        
+
         // Filter by brand
         if (brandId != null) {
             products = products.stream()
                     .filter(product -> product.getBrand() != null &&
-                                      product.getBrand().getBrandId().equals(brandId))
+                            product.getBrand().getBrandId().equals(brandId))
                     .collect(Collectors.toList());
         }
-        
+
         // Filter by price range
         if (minPrice != null) {
             products = products.stream()
@@ -186,49 +191,70 @@ public class ProductService {
                     .filter(product -> product.getSellingPrice() <= maxPrice)
                     .collect(Collectors.toList());
         }
-        
+
         // Filter by status
         if (isActive != null) {
             products = products.stream()
                     .filter(product -> product.getIsActive().equals(isActive))
                     .collect(Collectors.toList());
         }
-        
+
         return products.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     private ProductResponse mapToResponse(Product product) {
-        List<ProductColor> images = productColorRepository.findByProduct_ProductId(product.getProductId());
         String imageUrl = null;
-        if (!images.isEmpty()) {
-            imageUrl = BASE_URL + images.get(0).getImageUrl();
+
+        // Get main image from ProductImage table
+        var images = productImageRepository.findByProductId(product.getProductId());
+        var mainImage = images.stream()
+                .filter(img -> img.getIsMainImage() != null && img.getIsMainImage())
+                .findFirst();
+        
+        if (mainImage.isPresent()) {
+            String imgUrl = mainImage.get().getImageUrl();
+            if (imgUrl != null && !imgUrl.isEmpty() &&
+                !imgUrl.startsWith("http://") && !imgUrl.startsWith("https://")) {
+                imageUrl = BASE_URL + imgUrl;
+            } else {
+                imageUrl = imgUrl;
+            }
+        } else if (!images.isEmpty()) {
+            // Fallback: Lấy hình ảnh đầu tiên nếu không có main image
+            String imgUrl = images.get(0).getImageUrl();
+            if (imgUrl != null && !imgUrl.isEmpty() &&
+                !imgUrl.startsWith("http://") && !imgUrl.startsWith("https://")) {
+                imageUrl = BASE_URL + imgUrl;
+            } else {
+                imageUrl = imgUrl;
+            }
         }
+
         Integer totalStock = calculateTotalStock(product.getProductId());
         return new ProductResponse(
-            product.getProductId(),
-            product.getProductName(),
-            product.getDescription(),
-            product.getSellingPrice(),
-            product.getDiscountPercentage(),
-            product.getSubCategory().getSubCategoryName(),
-            product.getBrand().getBrandName(),
-            product.getBrand().getBrandId(),
-            product.getSubCategory().getSubCategoryId(),
-            product.getIsActive(),
-            product.getSubCategory().getGender().toString(),
-            totalStock,
-            product.getCreatedAt(),
-            product.getUpdatedAt(),
-            imageUrl
-        );
+                product.getProductId(),
+                product.getProductName(),
+                product.getDescription(),
+                product.getSellingPrice(),
+                product.getDiscountPercentage(),
+                product.getSubCategory().getSubCategoryName(),
+                product.getBrand().getBrandName(),
+                product.getBrand().getBrandId(),
+                product.getSubCategory().getSubCategoryId(),
+                product.getIsActive(),
+                product.getSubCategory().getGender().toString(),
+                totalStock,
+                product.getCreatedAt(),
+                product.getUpdatedAt(),
+                imageUrl);
     }
 
     private Integer calculateTotalStock(Integer productId) {
-        return productSizeRepository.findByProductColor_Product_ProductId(productId)
+        return productDetailsRepository.findByProductIdAndIsActiveTrue(productId)
                 .stream()
-                .mapToInt(productSize -> productSize.getStockQuantity())
+                .mapToInt(productDetails -> productDetails.getStockQuantity())
                 .sum();
     }
 

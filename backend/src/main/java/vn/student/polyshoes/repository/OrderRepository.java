@@ -56,7 +56,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     List<Order> findByCustomerCustomerId(Integer customerId);
     
     // Lấy đơn hàng của khách hàng với các chi tiết sản phẩm được load sẵn (eager fetch)
-    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.productSize ps LEFT JOIN FETCH ps.productColor pc LEFT JOIN FETCH pc.product WHERE o.customer.customerId = :customerId ORDER BY o.createdAt DESC")
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.productDetails pd LEFT JOIN FETCH pd.product WHERE o.customer.customerId = :customerId ORDER BY o.createdAt DESC")
     List<Order> findByCustomerCustomerIdWithItems(@Param("customerId") Integer customerId);
     
     // Kiểm tra khách hàng có đơn hàng nào hay không

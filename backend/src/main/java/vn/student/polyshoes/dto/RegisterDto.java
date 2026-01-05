@@ -11,37 +11,44 @@ import jakarta.validation.constraints.*;
 @AllArgsConstructor
 public class RegisterDto {
     // Họ và tên khách hàng
-    @NotBlank(message = "Full name must not be blank")
-    @Size(max = 50, message = "Full name must not exceed 50 characters")
+        @NotBlank(message = "Họ và tên không được để trống")
+        @Size(max = 50, message = "Họ và tên không vượt quá 50 ký tự")
     private String fullName;
 
     // Email của khách hàng
-    @NotBlank(message = "Email must not be blank")
-    @Email(message = "Email should be valid")
-    @Size(max = 255, message = "Email must not exceed 255 characters")
+        @NotBlank(message = "Email không được để trống")
+        @Email(message = "Email không hợp lệ")
+        @Size(max = 255, message = "Email không vượt quá 255 ký tự")
     private String email;
 
     // Mật khẩu (6-32 ký tự)
-    @NotBlank(message = "Password must not be blank")
-    @Size(min = 6, max = 32, message = "Password must be between 6 and 32 characters")
+        @NotBlank(message = "Mật khẩu không được để trống")
+        @Size(min = 6, max = 32, message = "Mật khẩu phải từ 6 đến 32 ký tự")
     private String password;
 
     // Số điện thoại của khách hàng
-    @NotBlank(message = "Phone number must not be blank")
-    @Size(max = 15, message = "Phone number must not exceed 15 characters")
+        @NotBlank(message = "Số điện thoại không được để trống")
+        @Size(max = 15, message = "Số điện thoại không vượt quá 15 ký tự")
     private String phone;
 
     // Địa chỉ chính
-    @NotBlank(message = "Address must not be blank")
-    @Size(max = 255, message = "Address must not exceed 255 characters")
+        @NotBlank(message = "Địa chỉ không được để trống")
+        @Size(max = 255, message = "Địa chỉ không vượt quá 255 ký tự")
     private String address;
 
     // Địa chỉ thứ hai (tùy chọn)
-    @Size(max = 255, message = "Address2 must not exceed 255 characters")
+        @Size(max = 255, message = "Địa chỉ 2 không vượt quá 255 ký tự")
     private String address2;
 
-    // Thành phố/Tỉnh thành
-    @NotBlank(message = "City must not be blank")
-    @Size(max = 50, message = "City must not exceed 50 characters")
-    private String city;
+    // Province ID từ GHN
+        @NotNull(message = "ID tỉnh không được để trống")
+    private Integer provinceId;
+
+    // District ID từ GHN
+        @NotNull(message = "ID quận/huyện không được để trống")
+    private Integer districtId;
+
+    // Ward Code từ GHN
+        @NotBlank(message = "Mã phường/xã không được để trống")
+    private String wardCode;
 }

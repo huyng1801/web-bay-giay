@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
  * Mỗi OrderItem chứa thông tin về một sản phẩm cụ thể trong đơn hàng
  */
 @Entity
-@Table(name = "order_item")
+@Table(name = "chi_tiet_don_hang")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,24 +28,24 @@ public class OrderItem {
     // ID duy nhất của chi tiết đơn hàng, tự động tăng
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_item_id")
+    @Column(name = "ma_chi_tiet_don_hang")
     private Integer orderItemId;
     
     // Số lượng sản phẩm đặt hàng
-    @Column(name = "quantity", nullable = false)
+    @Column(name = "so_luong", nullable = false)
     private Integer quantity;
     
     // Giá đơn vị (giá của một sản phẩm)
-    @Column(name = "unit_price", nullable = false)
+    @Column(name = "don_gia", nullable = false)
     private long unitPrice;
     
     // Tham chiếu tới đơn hàng cha (cascade delete: xóa OrderItem khi xóa Order)
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(name = "ma_don_hang", nullable = false)
     private Order order;
    
-    // Tham chiếu tới size và màu sắc cụ thể của sản phẩm
+    // Tham chiếu tới chi tiết sản phẩm (màu sắc và kích cỡ cụ thể)
     @ManyToOne
-    @JoinColumn(name = "product_size_id", nullable = false)
-    private ProductSize productSize;
+    @JoinColumn(name = "ma_chi_tiet_san_pham", nullable = false)
+    private ProductDetails productDetails;
 }

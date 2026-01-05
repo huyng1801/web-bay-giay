@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ProductService from '../../services/admin/ProductService';
+import ProductDetailsService from '../../services/admin/ProductDetailsService';
+import ProductImageService from '../../services/admin/ProductImageService';
 import SubcategoryService from '../../services/admin/SubcategoryService';
 import BrandService from '../../services/admin/BrandService';
 import { Table, Button, message, Modal, Form, Input, Select, Row, Col, Card, InputNumber, Tag } from 'antd';
-import ProductColorModal from './ProductColorModal';
+import ProductDetailsModal from './ProductDetailsModal';
 import ProductStockModal from './ProductStockModal';
+import ProductImageModal from './ProductImageModal';
 import RichTextEditor from '../common/RichTextEditor';
 
-import { EditOutlined, AppstoreAddOutlined, SearchOutlined, ClearOutlined, PoweroffOutlined, StockOutlined, FilterOutlined, EyeOutlined } from '@ant-design/icons';
+import { EditOutlined, AppstoreAddOutlined, SearchOutlined, ClearOutlined, PoweroffOutlined, StockOutlined, FilterOutlined, EyeOutlined, PictureOutlined } from '@ant-design/icons';
 
 // Helper function to count active product filters
 const getActiveProductFilterCount = (filters) => {
@@ -40,8 +43,9 @@ const ProductList = () => {
   });
   const [modalStates, setModalStates] = useState({
     productModal: false,
-    colorModal: false,
-    stockModal: false
+    detailsModal: false,
+    stockModal: false,
+    imageModal: false
   });
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -85,8 +89,10 @@ const ProductList = () => {
       } else {
         form.resetFields();
       }
-    } else if (modalType === 'colorModal') {
-      setSelectedProduct(product); // Set selected product for color modal
+    } else if (modalType === 'detailsModal') {
+      setSelectedProduct(product); // Set selected product for details modal
+    } else if (modalType === 'imageModal') {
+      setSelectedProduct(product); // Set selected product for image modal
     } else if (modalType === 'stockModal') {
       setSelectedProduct(product); // Set selected product for stock modal
     }
@@ -120,17 +126,18 @@ const ProductList = () => {
     }
   };
 
-  // AI-enhanced search function using GET parameters
+  // Tìm kiếm sản phẩm nâng cao sử dụng endpoint /products/search
   const performSearch = useCallback(async () => {
     setIsSearching(true);
     try {
       const searchParams = {
-        query: filters.productName || null,
-        subCategoryId: filters.subCategoryId,
-        brandId: filters.brandId,
-        minPrice: filters.minSellingPrice,
-        maxPrice: filters.maxSellingPrice,
-        isActive: filters.isActive
+        query: filters.productName?.trim() || undefined,
+        subCategoryId: filters.subCategoryId !== null ? filters.subCategoryId : undefined,
+        brandId: filters.brandId !== null ? filters.brandId : undefined,
+        minPrice: filters.minSellingPrice !== null ? filters.minSellingPrice : undefined,
+        maxPrice: filters.maxSellingPrice !== null ? filters.maxSellingPrice : undefined,
+        isActive: filters.isActive !== null ? filters.isActive : undefined,
+        aiEnhanced: false
       };
       
       // Remove null/undefined values
@@ -141,11 +148,12 @@ const ProductList = () => {
       });
       
       const results = await ProductService.searchProducts(searchParams);
-      setFilteredProducts(results);
-      setProducts(results); // Update products state as well
+      setFilteredProducts(results || []);
+      setProducts(results || []); // Update products state as well
     } catch (error) {
       console.error('Search error:', error);
       message.error("Lỗi khi tìm kiếm sản phẩm");
+      setFilteredProducts([]);
     } finally {
       setIsSearching(false);
     }
@@ -177,43 +185,66 @@ const ProductList = () => {
   useEffect(() => {
     const searchTimer = setTimeout(() => {
       performSearch();
-    }, 300); // 300ms debounce
+    }, 800); // 800ms debounce for price filtering
 
     return () => clearTimeout(searchTimer);
   }, [performSearch]);
 
-  // Product operations
+  // Product operations - Create hoặc Update sản phẩm
   const handleProductSubmit = async () => {
     try {
       const values = await form.validateFields();
-      const productData = { ...values };
-      console.log(productData);
-      // Nếu discountPercentage null hoặc undefined thì gán bằng 0
-      if (productData.discountPercentage == null || productData.discountPercentage === "") {
-        productData.discountPercentage = 0;
+      
+      // Chuẩn bị dữ liệu sản phẩm
+      const productData = {
+        ...values,
+        sellingPrice: parseFloat(values.sellingPrice) || 0,
+        discountPercentage: values.discountPercentage != null && values.discountPercentage !== "" 
+          ? parseFloat(values.discountPercentage) 
+          : 0
+      };
+
+      // Validate giá trị
+      if (productData.sellingPrice <= 0) {
+        message.error("Giá bán phải lớn hơn 0");
+        return;
+      }
+
+      if (productData.discountPercentage < 0 || productData.discountPercentage > 100) {
+        message.error("Giảm giá phải từ 0 đến 100%");
+        return;
       }
 
       if (editingProduct) {
         await ProductService.updateProduct(editingProduct.productId, productData);
-        message.success("Cập nhật sản phẩm thành công");
+        message.success("Cập nhật sản phẩm thành công!");
       } else {
         await ProductService.createProduct(productData);
-        message.success("Thêm sản phẩm thành công");
+        message.success("Thêm sản phẩm thành công!");
       }
 
       toggleModal('productModal', false);
-      loadProducts();
+      await loadProducts();
+      await performSearch();
     } catch (error) {
-      message.error("Vui lòng điền đầy đủ các trường bắt buộc");
+      console.error('Error submitting product:', error);
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data 
+        || error.message 
+        || "Vui lòng điền đầy đủ các trường bắt buộc";
+      message.error(errorMessage);
     }
   };
 
   const handleToggleStatus = async (id) => {
     try {
-      await ProductService.toggleProductStatus(id);
-      message.success("Cập nhật trạng thái sản phẩm thành công");
-      loadProducts();
+      const response = await ProductService.toggleProductStatus(id);
+      const newStatus = response?.isActive ? 'Hoạt động' : 'Ngừng hoạt động';
+      message.success(`Đã chuyển trạng thái sản phẩm sang: ${newStatus}`);
+      await loadProducts();
+      await performSearch();
     } catch (error) {
+      console.error('Error toggling product status:', error);
       if (error.response?.data) {
         message.error(error.response.data);
       } else {
@@ -237,6 +268,44 @@ const ProductList = () => {
       key: 'productName',
       sorter: (a, b) => a.productName.localeCompare(b.productName),
       ellipsis: true,
+    },
+    {
+      title: 'Hình ảnh',
+      dataIndex: 'imageUrl',
+      key: 'imageUrl',
+      width: 100,
+      render: (imageUrl, record) => (
+        imageUrl ? (
+          <img 
+            src={imageUrl} 
+            alt={record.productName}
+            style={{ 
+              width: '60px', 
+              height: '60px', 
+              objectFit: 'cover', 
+              borderRadius: '8px',
+              border: '1px solid #f0f0f0',
+              cursor: 'pointer'
+            }}
+            onClick={() => window.open(imageUrl, '_blank')}
+          />
+        ) : (
+          <div style={{
+            width: '60px', 
+            height: '60px',
+            backgroundColor: '#f5f5f5',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#999',
+            fontSize: '12px',
+            textAlign: 'center'
+          }}>
+            Chưa có ảnh
+          </div>
+        )
+      )
     },
     {
       title: 'Mô tả',
@@ -330,8 +399,15 @@ const ProductList = () => {
           <Button 
             type="link" 
             icon={<AppstoreAddOutlined />} 
-            onClick={() => toggleModal('colorModal', true, record)}
-            title="Quản lý màu sắc"
+            onClick={() => toggleModal('detailsModal', true, record)}
+            title="Quản lý chi tiết sản phẩm"
+          />
+          <Button 
+            type="link" 
+            icon={<PictureOutlined />} 
+            onClick={() => toggleModal('imageModal', true, record)}
+            title="Quản lý hình ảnh"
+            style={{ color: '#722ed1' }}
           />
           <Button 
             type="link" 
@@ -342,7 +418,7 @@ const ProductList = () => {
           />
         </span>
       ),
-      width: 220,
+      width: 250,
       fixed: 'right',
     },
   ];
@@ -583,10 +659,18 @@ const ProductList = () => {
       </Modal>
 
       {/* Color Modal */}
-      <ProductColorModal
-        visible={modalStates.colorModal}
+      <ProductDetailsModal
+        visible={modalStates.detailsModal}
         product={selectedProduct}
-        onCancel={() => toggleModal('colorModal', false)}
+        onCancel={() => toggleModal('detailsModal', false)}
+        onSuccess={loadProducts}
+      />
+
+      {/* Image Management Modal */}
+      <ProductImageModal
+        visible={modalStates.imageModal}
+        product={selectedProduct}
+        onCancel={() => toggleModal('imageModal', false)}
         onSuccess={loadProducts}
       />
 

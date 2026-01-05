@@ -20,7 +20,6 @@ import {
 } from '@ant-design/icons';
 import AdminLayout from '../../layouts/AdminLayout';
 import CustomerService from '../../services/admin/CustomerService';
-import { getProvinceOptions } from '../../utils/provinceUtils';
 
 const CustomerPage = () => {
   const [customers, setCustomers] = useState([]);
@@ -377,7 +376,11 @@ const CustomerPage = () => {
                       option?.children?.toLowerCase().indexOf(input.toLowerCase()) >= 0
                     }
                   >
-                    {getProvinceOptions().map(province => (
+                    {[
+                      { value: 'hanoi', label: 'Hà Nội' },
+                      { value: 'hcm', label: 'TP. Hồ Chí Minh' },
+                      { value: 'danang', label: 'Đà Nẵng' },
+                    ].map(province => (
                       <Select.Option key={province.value} value={province.value}>
                         {province.label}
                       </Select.Option>

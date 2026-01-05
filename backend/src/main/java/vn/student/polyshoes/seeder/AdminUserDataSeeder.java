@@ -40,34 +40,48 @@ public class AdminUserDataSeeder {
                 // Tạo tài khoản admin
                 AdminUser adminUser = new AdminUser();
                 adminUser.setAdminUserId(GenerateUtils.generateUUID());
-                adminUser.setFullName("Nguyen Van A");
-                adminUser.setEmail("nguyenvana@gmail.com");
-                adminUser.setPhone("0987654321");
-                adminUser.setAddress("Hà Nội");
-                adminUser.setHashPassword(passwordEncoder.encode("12345678")); // Mã hóa mật khẩu
+                adminUser.setFullName("Admin Polyshoes");
+                adminUser.setEmail("admin@polyshoes.com");
+                adminUser.setPhone("0387654321");
+                adminUser.setAddress("Hà Nội, Việt Nam");
+                adminUser.setHashPassword(passwordEncoder.encode("admin123456")); // Mã hóa mật khẩu
                 adminUser.setIsActive(true);
                 adminUser.setCreatedAt(new Date());
                 adminUser.setUpdatedAt(new Date());
                 adminUser.setRole(Role.ADMIN);
 
-                // Tạo tài khoản nhân viên
-                AdminUser employeeUser = new AdminUser();
-                employeeUser.setAdminUserId(GenerateUtils.generateUUID());
-                employeeUser.setFullName("Nguyen Van B");
-                employeeUser.setEmail("nguyenvanb@gmail.com");
-                employeeUser.setPhone("0976543210");
-                employeeUser.setAddress("456 Đường DEF, Quận 3, TP.HCM");
-                employeeUser.setHashPassword(passwordEncoder.encode("12345678")); // Mã hóa mật khẩu
-                employeeUser.setIsActive(true);
-                employeeUser.setCreatedAt(new Date());
-                employeeUser.setUpdatedAt(new Date());
-                employeeUser.setRole(Role.EMPLOYEE);
+                // Tạo tài khoản nhân viên 1
+                AdminUser employeeUser1 = new AdminUser();
+                employeeUser1.setAdminUserId(GenerateUtils.generateUUID());
+                employeeUser1.setFullName("Trần Thị Thu Hương");
+                employeeUser1.setEmail("thuhuong@polyshoes.com");
+                employeeUser1.setPhone("0376543210");
+                employeeUser1.setAddress("TP.HCM, Việt Nam");
+                employeeUser1.setHashPassword(passwordEncoder.encode("employee123456")); // Mã hóa mật khẩu
+                employeeUser1.setIsActive(true);
+                employeeUser1.setCreatedAt(new Date());
+                employeeUser1.setUpdatedAt(new Date());
+                employeeUser1.setRole(Role.EMPLOYEE);
+                
+                // Tạo tài khoản nhân viên 2
+                AdminUser employeeUser2 = new AdminUser();
+                employeeUser2.setAdminUserId(GenerateUtils.generateUUID());
+                employeeUser2.setFullName("Nguyễn Văn Linh");
+                employeeUser2.setEmail("vanlinh@polyshoes.com");
+                employeeUser2.setPhone("0365432109");
+                employeeUser2.setAddress("Đà Nẵng, Việt Nam");
+                employeeUser2.setHashPassword(passwordEncoder.encode("employee123456")); // Mã hóa mật khẩu
+                employeeUser2.setIsActive(true);
+                employeeUser2.setCreatedAt(new Date());
+                employeeUser2.setUpdatedAt(new Date());
+                employeeUser2.setRole(Role.EMPLOYEE);
 
                 // Lưu admin user vào database
                 userRepository.save(adminUser);
-                userRepository.save(employeeUser);
+                userRepository.save(employeeUser1);
+                userRepository.save(employeeUser2);
 
-                logger.info("Dữ liệu admin user đã được khởi tạo thành công!");
+                logger.info("Dữ liệu admin user đã được khởi tạo thành công! (1 Admin + 2 Employees)");
             }
         };
     }

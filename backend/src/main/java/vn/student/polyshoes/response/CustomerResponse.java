@@ -16,8 +16,5 @@ public class CustomerResponse {
     private String fullName; // Họ tên đầy đủ
     private String email; // Địa chỉ email, dùng để đăng nhập
     private String phone; // Số điện thoại liên lạc
-    private String address; // Địa chỉ giao hàng chính
-    private String address2; // Địa chỉ giao hàng thứ hai
-    private String city; // Thành phố/Tỉnh
     private Boolean isActive; // Trạng thái hoạt động (true: hoạt động, false: bị khóa)
 }

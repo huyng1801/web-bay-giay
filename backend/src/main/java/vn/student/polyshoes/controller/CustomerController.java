@@ -86,9 +86,6 @@ public class CustomerController {
         response.setFullName(customer.getFullName());
         response.setEmail(customer.getEmail());
         response.setPhone(customer.getPhone());
-        response.setAddress(customer.getAddress());
-        response.setAddress2(customer.getAddress2());
-        response.setCity(customer.getCity());
         response.setIsActive(customer.getIsActive());
         return response;
     }

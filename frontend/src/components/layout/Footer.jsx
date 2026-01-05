@@ -185,7 +185,7 @@ const Footer = () => {
                     <Col xs={24} sm={12} md={6}>
                         <div style={styles.footerColumn}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-                                <img src="/logo.jpg" alt="Poly Shoes Logo" style={{ height: 80, marginRight: 12, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} />
+                                <img src="/logo.png" alt="Poly Shoes Logo" style={{ height: 80, marginRight: 12, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} />
                             </div>
                             <Text style={styles.columnText}>
                                 Poly Shoes là điểm đến lý tưởng cho những ai yêu thích thời trang chất lượng cao. Chúng tôi cam kết mang đến những sản phẩm tuyệt vời với giá cả hợp lý.

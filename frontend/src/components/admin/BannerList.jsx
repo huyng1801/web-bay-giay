@@ -123,6 +123,32 @@ const BannerList = () => {
       ),
     },
     {
+      title: 'Người tạo',
+      key: 'createdBy',
+      render: (_, record) => (
+        <span>
+          {record.createdBy ? record.createdBy.fullName : 'N/A'}
+          <br />
+          <small style={{ color: '#8c8c8c' }}>
+            {record.createdAt ? new Date(record.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+          </small>
+        </span>
+      ),
+    },
+    {
+      title: 'Cập nhật cuối',
+      key: 'updatedBy', 
+      render: (_, record) => (
+        <span>
+          {record.updatedBy ? record.updatedBy.fullName : 'N/A'}
+          <br />
+          <small style={{ color: '#8c8c8c' }}>
+            {record.updatedAt ? new Date(record.updatedAt).toLocaleDateString('vi-VN') : 'N/A'}
+          </small>
+        </span>
+      ),
+    },
+    {
       title: 'Trạng thái',
       dataIndex: 'isActive',
       key: 'isActive',

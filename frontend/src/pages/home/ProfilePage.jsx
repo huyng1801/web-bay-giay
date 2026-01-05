@@ -21,10 +21,9 @@ import {
     SaveOutlined 
 } from '@ant-design/icons';
 import CustomerLayout from '../../layouts/CustomerLayout';
-import { getCustomerByEmail } from '../../services/home/HomeService';
+import { getOrdersByCustomerId, getCustomerByEmail } from '../../services/home/HomeService';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
-import { getProvinceOptions } from '../../utils/provinceUtils';
 
 const { Title, Text } = Typography;
 
@@ -424,7 +423,12 @@ const ProfilePage = () => {
                                                     filterOption={(input, option) =>
                                                         (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                                                     }
-                                                    options={getProvinceOptions()}
+                                                    options={[
+                                                        { value: 'hanoi', label: 'Hà Nội' },
+                                                        { value: 'hcm', label: 'TP. Hồ Chí Minh' },
+                                                        { value: 'danang', label: 'Đà Nẵng' },
+                                                        // Thêm tỉnh thành khác nếu cần
+                                                    ]}
                                                 />
                                             </Form.Item>
                                         </Col>

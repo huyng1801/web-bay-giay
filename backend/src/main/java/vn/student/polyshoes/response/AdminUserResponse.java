@@ -19,8 +19,7 @@ public class AdminUserResponse {
     private String email; // Email của admin user, dùng để đăng nhập
     private String fullName; // Họ tên đầy đủ của admin user
     private String phone; // Số điện thoại liên lạc
-    private String address; // Địa chỉ chính
-    private String address2; // Địa chỉ thứ hai
+    private String address; // Địa chỉ
     private Role role; // Vai trò của admin (ADMIN, STAFF, ...)
     private Boolean isActive; // Trạng thái hoạt động (true: hoạt động, false: bị khóa)
     private Date createdAt; // Thời gian tạo tài khoản

@@ -2,9 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getProductById,
-  getProductColorsByProductId,
-  getSizesByProductColorId,
-  getImagesByProductColorId,
+  getDetailsByProductId,
+  getProductImages,
   getAllProducts,
 } from "../../services/home/HomeService";
 import {
@@ -26,7 +25,6 @@ import {
   ThunderboltOutlined,
 } from "@ant-design/icons";
 import CustomerLayout from "../../layouts/CustomerLayout";
-import ProductFeedback from "../../components/home/ProductFeedback";
 import ProductCard from "../../components/home/ProductCard";
 
 const { Title, Text } = Typography;
@@ -51,6 +49,83 @@ const styles = {
     objectFit: "cover",
     borderRadius: "12px",
     border: "none",
+  },
+
+  // Thumbnail Gallery
+  thumbnailContainer: {
+    display: "flex",
+    gap: "10px",
+    marginTop: "16px",
+    overflow: "hidden",
+    paddingBottom: "8px",
+    position: "relative",
+  },
+
+  thumbnailScroll: {
+    display: "flex",
+    gap: "10px",
+    overflow: "auto",
+    overflowY: "hidden",
+    scrollBehavior: "smooth",
+    flex: 1,
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+    "&::-webkit-scrollbar": {
+      display: "none"
+    }
+  },
+
+  thumbnailNavButton: {
+    position: "absolute",
+    top: "50%",
+    transform: "translateY(-50%)",
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    background: "rgba(0,0,0,0.5)",
+    border: "none",
+    color: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "16px",
+    transition: "all 0.3s ease",
+    zIndex: 10,
+  },
+
+  thumbnailNavButtonHover: {
+    background: "rgba(0,0,0,0.8)",
+    transform: "translateY(-50%) scale(1.1)",
+  },
+
+  thumbnailNavPrev: {
+    left: "-40px",
+  },
+
+  thumbnailNavNext: {
+    right: "-40px",
+  },
+
+  thumbnail: {
+    width: "80px",
+    height: "80px",
+    borderRadius: "8px",
+    border: "2px solid #eaeaea",
+    objectFit: "cover",
+    cursor: "pointer",
+    transition: "all 0.3s cubic-bezier(.25,.8,.25,1)",
+    flexShrink: 0,
+  },
+
+  thumbnailActive: {
+    borderColor: "#ff6b35",
+    boxShadow: "0 2px 8px rgba(255, 107, 53, 0.2)",
+  },
+
+  thumbnailHover: {
+    borderColor: "#ff6b35",
+    boxShadow: "0 4px 12px rgba(255, 107, 53, 0.3)",
   },
 
   // Product info section
@@ -371,15 +446,17 @@ const styles = {
 const ProductDetails = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
+  const carouselRef = React.useRef(null);
+  const thumbnailContainerRef = React.useRef(null);
+  
   const [productDetails, setProductDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [colors, setColors] = useState([]);
-  const [selectedColorId, setSelectedColorId] = useState(null);
-  const [sizes, setSizes] = useState([]);
-  const [images, setImages] = useState([]);
+  const [allProductDetails, setAllProductDetails] = useState([]); // All details for the product
+  const [selectedDetailId, setSelectedDetailId] = useState(null); // Selected detail ID
+  const [productImages, setProductImages] = useState([]);
   const [displayImages, setDisplayImages] = useState([]);
-  const [selectedSizeId, setSelectedSizeId] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isBuyNowMode, setIsBuyNowMode] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -396,8 +473,9 @@ const ProductDetails = () => {
     const fetchProductDetails = async () => {
       setLoading(true);
       try {
+        // Fetch main product information
         const product = await getProductById(productId);
-
+        
         // Check if product is active
         if (!product.isActive) {
           setError("Sản phẩm này hiện không khả dụng.");
@@ -406,18 +484,21 @@ const ProductDetails = () => {
 
         setProductDetails(product);
 
-        const productColors = await getProductColorsByProductId(productId);
-        // Filter for active colors only
-        const activeColors = productColors.filter(
-          (color) => color.isActive === true
-        );
-        setColors(activeColors);
+        // Fetch all product details (contains color, size, stock info)
+        const details = await getDetailsByProductId(productId);
+        setAllProductDetails(details);
 
-        if (activeColors && activeColors.length > 0) {
-          setSelectedColorId(activeColors[0].productColorId);
+        // Select first available detail by default
+        if (details && details.length > 0) {
+          setSelectedDetailId(details[0].productDetailsId);
         } else {
-          setError("Sản phẩm này hiện không có màu sắc khả dụng.");
+          setError("Sản phẩm này hiện không có chi tiết khả dụng.");
         }
+
+        // Fetch product images
+        const images = await getProductImages(productId);
+        setProductImages(images);
+        setDisplayImages(images);
 
         // Fetch related products from same sub-category
         if (product.subCategoryId) {
@@ -443,65 +524,144 @@ const ProductDetails = () => {
     fetchProductDetails();
   }, [productId]);
 
-  useEffect(() => {
-    const fetchColorDetails = async () => {
-      if (selectedColorId) {
-        try {
-          const [fetchedSizes, fetchedImages] = await Promise.all([
-            getSizesByProductColorId(selectedColorId),
-            getImagesByProductColorId(selectedColorId),
-          ]);
-          // Filter for active sizes only
-          const activeSizes = fetchedSizes.filter(
-            (size) => size.isActive === true
-          );
-          setSizes(activeSizes);
-          setImages(fetchedImages);
-          setSelectedSizeId(null); // Reset size selection when color changes
-        } catch (err) {
-          console.error(err);
-        }
-      }
-    };
+  // Auto-scroll thumbnail when carousel changes
+  const scrollThumbnailToActive = (index) => {
+    if (!thumbnailContainerRef.current) return;
+    const scrollContainer = thumbnailContainerRef.current.querySelector('[data-scroll-container]');
+    if (!scrollContainer) return;
+    
+    const thumbnail = scrollContainer.children[index];
+    if (!thumbnail) return;
+    
+    // Scroll to center the active thumbnail
+    const scrollLeft = thumbnail.offsetLeft - scrollContainer.offsetWidth / 2 + thumbnail.offsetWidth / 2;
+    scrollContainer.scrollTo({
+      left: Math.max(0, scrollLeft),
+      behavior: 'smooth'
+    });
+  };
 
-    fetchColorDetails();
-  }, [selectedColorId]);
-
-  // Tạo danh sách ảnh để hiển thị (ảnh chính + ảnh phụ)
-  useEffect(() => {
-    if (selectedColorId && colors.length > 0) {
-      const selectedColor = colors.find(
-        (color) => color.productColorId === selectedColorId
-      );
-      const imagesToDisplay = [];
-
-      // Thêm ảnh chính của màu vào đầu danh sách
-      if (selectedColor && selectedColor.imageUrl) {
-        imagesToDisplay.push({
-          id: `main-${selectedColorId}`,
-          imageUrl: selectedColor.imageUrl,
-          alt: `${productDetails?.productName} - ${selectedColor.colorName}`,
-          isMainImage: true,
-        });
-      }
-
-      // Thêm các ảnh phụ từ ProductColorImage
-      images.forEach((image) => {
-        imagesToDisplay.push({
-          id: image.productColorImageId,
-          imageUrl: image.imageUrl,
-          alt: productDetails?.productName,
-          isMainImage: false,
-        });
-      });
-
-      setDisplayImages(imagesToDisplay);
+  // Handle thumbnail click to change main image
+  const handleThumbnailClick = (index) => {
+    setCurrentImageIndex(index);
+    if (carouselRef.current) {
+      carouselRef.current.goTo(index);
     }
-  }, [selectedColorId, colors, images, productDetails]);
+    scrollThumbnailToActive(index);
+  };
+
+  // Handle thumbnail navigation buttons
+  const scrollThumbnails = (direction) => {
+    if (!thumbnailContainerRef.current) return;
+    const scrollContainer = thumbnailContainerRef.current.querySelector('[data-scroll-container]');
+    if (!scrollContainer) return;
+    
+    const scrollAmount = 100; // pixels to scroll
+    scrollContainer.scrollBy({
+      left: direction === 'next' ? scrollAmount : -scrollAmount,
+      behavior: 'smooth'
+    });
+  };
+
+  // Scroll thumbnail when carousel changes
+  useEffect(() => {
+    scrollThumbnailToActive(currentImageIndex);
+  }, [currentImageIndex]);
+
+  // Get current selected detail object
+  const getSelectedDetail = () => {
+    if (!selectedDetailId || !allProductDetails.length) return null;
+    return allProductDetails.find(d => d.productDetailsId === selectedDetailId);
+  };
+
+  const selectedDetail = getSelectedDetail();
+
+  // Get unique colors from all product details
+  const getUniqueColors = () => {
+    const colorMap = new Map();
+    allProductDetails.forEach(detail => {
+      if (detail.color && !colorMap.has(detail.color.colorId)) {
+        colorMap.set(detail.color.colorId, detail.color);
+      }
+    });
+    return Array.from(colorMap.values());
+  };
+
+  // Get sizes for selected color
+  const getAvailableSizesForColor = () => {
+    if (!selectedDetail || !selectedDetail.color) return [];
+    const colorId = selectedDetail.color.colorId;
+    const detailsForColor = allProductDetails.filter(
+      d => d.color?.colorId === colorId && d.isActive
+    );
+    // Get unique sizes
+    const sizeMap = new Map();
+    detailsForColor.forEach(detail => {
+      if (detail.size && !sizeMap.has(detail.size.sizeId)) {
+        sizeMap.set(detail.size.sizeId, detail.size);
+      }
+    });
+    return Array.from(sizeMap.values());
+  };
+
+  // Handle color change - select first detail with that color
+  const handleColorChange = (colorId) => {
+    const firstDetailWithColor = allProductDetails.find(
+      d => d.color?.colorId === colorId && d.isActive
+    );
+    if (firstDetailWithColor) {
+      setSelectedDetailId(firstDetailWithColor.productDetailsId);
+    }
+  };
+
+  // Handle size change - find and select the detail with this size and current color
+  const handleSizeChange = (sizeId) => {
+    const currentColor = selectedDetail?.color?.colorId;
+    if (currentColor) {
+      const detailWithSizeAndColor = allProductDetails.find(
+        d => d.color?.colorId === currentColor && d.size?.sizeId === sizeId && d.isActive
+      );
+      if (detailWithSizeAndColor) {
+        setSelectedDetailId(detailWithSizeAndColor.productDetailsId);
+      }
+    }
+  };
+
+  // Create list of images to display (main image + additional images)
+  useEffect(() => {
+    const imagesToDisplay = [];
+
+    // Add main product image if available
+    if (productDetails && productDetails.mainImageUrl) {
+      imagesToDisplay.push({
+        id: `main-${productId}`,
+        imageUrl: productDetails.mainImageUrl,
+        alt: `${productDetails.productName} - Ảnh chính`,
+        isMainImage: true,
+      });
+    }
+
+    // Add additional product images
+    productImages.forEach((image) => {
+      imagesToDisplay.push({
+        id: image.productImageId,
+        imageUrl: image.imageUrl,
+        alt: `${productDetails?.productName} - Ảnh phụ`,
+        isMainImage: false,
+      });
+    });
+
+    setDisplayImages(imagesToDisplay);
+  }, [productImages, productDetails, productId]);
 
   const handleAddToCart = () => {
-    if (!selectedSizeId) {
-      message.error("Vui lòng chọn kích cỡ.");
+    if (!selectedDetail || !selectedDetailId) {
+      message.error("Vui lòng chọn chi tiết sản phẩm (màu và kích cỡ).");
+      return;
+    }
+
+    if (selectedDetail.stockQuantity <= 0) {
+      message.error("Sản phẩm này hiện đã hết hàng.");
       return;
     }
 
@@ -512,33 +672,34 @@ const ProductDetails = () => {
 
     const cartItem = {
       productId,
+      productDetailsId: selectedDetailId,
+      colorId: selectedDetail.color?.colorId,
+      sizeId: selectedDetail.size?.sizeId,
       productName: productDetails.productName,
-      colorId: selectedColorId,
-      sizeId: selectedSizeId,
+      colorName: selectedDetail.color?.colorName,
+      sizeValue: selectedDetail.size?.sizeValue,
+      imageUrl: productDetails.mainImageUrl,
       quantity,
       unitPrice: discountedPrice,
     };
 
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    // Kiểm tra sản phẩm đã có trong giỏ chưa (cùng productId, colorId, sizeId)
+    // Check if product detail already in cart
     const existingIndex = cart.findIndex(
-      (item) =>
-        item.productId === productId &&
-        item.colorId === selectedColorId &&
-        item.sizeId === selectedSizeId
+      (item) => item.productDetailsId === selectedDetailId
     );
     if (existingIndex !== -1) {
-      // Nếu đã có thì kiểm tra tổng số lượng không vượt quá kho
+      // If exists, check total doesn't exceed stock
       const newTotalQuantity = cart[existingIndex].quantity + quantity;
-      if (newTotalQuantity > selectedSize.stockQuantity) {
+      if (newTotalQuantity > selectedDetail.stockQuantity) {
         message.error(
-          `Chỉ có thể mua tối đa ${selectedSize.stockQuantity} sản phẩm này. Hiện tại đã có ${cart[existingIndex].quantity} trong giỏ.`
+          `Chỉ có thể mua tối đa ${selectedDetail.stockQuantity} sản phẩm này. Hiện tại đã có ${cart[existingIndex].quantity} trong giỏ.`
         );
         return;
       }
       cart[existingIndex].quantity = newTotalQuantity;
     } else {
-      // Nếu chưa có thì thêm mới
+      // If not exists, add new
       cart.push(cartItem);
     }
     localStorage.setItem("cart", JSON.stringify(cart));
@@ -549,8 +710,13 @@ const ProductDetails = () => {
   };
 
   const handleBuyNow = () => {
-    if (!selectedSizeId) {
-      message.error("Vui lòng chọn kích cỡ.");
+    if (!selectedDetail || !selectedDetailId) {
+      message.error("Vui lòng chọn chi tiết sản phẩm (màu và kích cỡ).");
+      return;
+    }
+
+    if (selectedDetail.stockQuantity <= 0) {
+      message.error("Sản phẩm này hiện đã hết hàng.");
       return;
     }
 
@@ -559,20 +725,24 @@ const ProductDetails = () => {
       productDetails.discountPercentage
     );
 
-    // Tạo item để mua ngay
+    // Create item for buy now
     const buyNowItem = {
       productId,
+      productDetailsId: selectedDetailId,
+      colorId: selectedDetail.color?.colorId,
+      sizeId: selectedDetail.size?.sizeId,
       productName: productDetails.productName,
-      colorId: selectedColorId,
-      sizeId: selectedSizeId,
+      colorName: selectedDetail.color?.colorName,
+      sizeValue: selectedDetail.size?.sizeValue,
+      imageUrl: productDetails.mainImageUrl,
       quantity,
       unitPrice: discountedPrice,
     };
 
-    // Lưu vào localStorage với key riêng cho mua ngay
+    // Save to localStorage with key for buy now
     localStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
 
-    // Chuyển hướng đến trang thanh toán với flag mua ngay
+    // Redirect to checkout with buy now flag
     navigate("/checkout?buyNow=true");
   };
 
@@ -602,9 +772,8 @@ const ProductDetails = () => {
     );
   }
 
-  const selectedSize = sizes.find(
-    (size) => size.productSizeId === selectedSizeId
-  );
+  const uniqueColors = getUniqueColors();
+  const availableSizesForColor = getAvailableSizesForColor();
 
   return (
     <CustomerLayout>
@@ -614,14 +783,25 @@ const ProductDetails = () => {
             {/* Image Carousel */}
             <Col xs={24} md={12}>
               <div style={styles.carousel}>
-                <Carousel autoplay>
+                <Carousel 
+                  ref={carouselRef}
+                  autoplay={{
+                    delay: 4000
+                  }}
+                  dots={false}
+                  onChange={(current) => setCurrentImageIndex(current)}
+                >
                   {displayImages.length > 0 ? (
-                    displayImages.map((image) => (
-                      <div key={image.id}>
+                    displayImages.map((image, idx) => (
+                      <div key={idx}>
                         <img
                           src={image.imageUrl}
-                          alt={image.alt}
+                          alt={image.alt || `Ảnh sản phẩm ${idx + 1}`}
                           style={styles.carouselImage}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling && (e.target.nextElementSibling.style.display = 'block');
+                          }}
                         />
                       </div>
                     ))
@@ -641,6 +821,64 @@ const ProductDetails = () => {
                     </div>
                   )}
                 </Carousel>
+
+                {/* Thumbnail Gallery */}
+                {displayImages.length > 1 && (
+                  <div ref={thumbnailContainerRef} style={styles.thumbnailContainer}>
+                    <button
+                      style={{
+                        ...styles.thumbnailNavButton,
+                        ...styles.thumbnailNavPrev,
+                      }}
+                      onMouseEnter={(e) => Object.assign(e.target.style, styles.thumbnailNavButtonHover)}
+                      onMouseLeave={(e) => e.target.style.background = "rgba(0,0,0,0.5)"}
+                      onClick={() => scrollThumbnails('prev')}
+                      title="Ảnh trước"
+                    >
+                      &#8249;
+                    </button>
+
+                    <div data-scroll-container style={styles.thumbnailScroll}>
+                      {displayImages.map((image, idx) => (
+                        <img
+                          key={idx}
+                          src={image.imageUrl}
+                          alt={`Thumbnail ${idx + 1}`}
+                          style={{
+                            ...styles.thumbnail,
+                            ...(currentImageIndex === idx ? styles.thumbnailActive : {})
+                          }}
+                          onMouseEnter={(e) => {
+                            if (currentImageIndex !== idx) {
+                              e.target.style.borderColor = styles.thumbnailHover.borderColor;
+                              e.target.style.boxShadow = styles.thumbnailHover.boxShadow;
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (currentImageIndex !== idx) {
+                              e.target.style.borderColor = styles.thumbnail.border.split(" ")[2];
+                              e.target.style.boxShadow = "none";
+                            }
+                          }}
+                          onClick={() => handleThumbnailClick(idx)}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      style={{
+                        ...styles.thumbnailNavButton,
+                        ...styles.thumbnailNavNext,
+                      }}
+                      onMouseEnter={(e) => Object.assign(e.target.style, styles.thumbnailNavButtonHover)}
+                      onMouseLeave={(e) => e.target.style.background = "rgba(0,0,0,0.5)"}
+                      onClick={() => scrollThumbnails('next')}
+                      title="Ảnh tiếp"
+                    >
+                      &#8250;
+                    </button>
+                  </div>
+                )}
               </div>
             </Col>
 
@@ -676,11 +914,11 @@ const ProductDetails = () => {
                             </>
                           )}
                         </div>
-                        {selectedSize && selectedSize.stockQuantity > 0 && (
+                        {selectedDetail && selectedDetail.stockQuantity > 0 && (
                           <div style={styles.stockStatus}>
                             <CheckCircleOutlined />
                             <Text>
-                              Còn {selectedSize.stockQuantity} sản phẩm có sẵn
+                              Còn {selectedDetail.stockQuantity} sản phẩm có sẵn
                             </Text>
                           </div>
                         )}
@@ -706,13 +944,13 @@ const ProductDetails = () => {
                 <div style={styles.section}>
                   <Text style={styles.sectionTitle}>Màu Sắc</Text>
                   <div style={styles.optionContainer}>
-                    {colors.map((color) => (
+                    {uniqueColors.map((color) => (
                       <button
-                        key={color.productColorId}
-                        onClick={() => setSelectedColorId(color.productColorId)}
+                        key={color.colorId}
+                        onClick={() => handleColorChange(color.colorId)}
                         style={{
                           ...styles.colorButton,
-                          ...(selectedColorId === color.productColorId
+                          ...(selectedDetail?.color?.colorId === color.colorId
                             ? styles.colorButtonSelected
                             : {}),
                         }}
@@ -728,22 +966,19 @@ const ProductDetails = () => {
                 <div style={styles.section}>
                   <Text style={styles.sectionTitle}>Kích Cỡ</Text>
                   <div style={styles.optionContainer}>
-                    {sizes.map((size) => (
+                    {availableSizesForColor.map((size) => (
                       <button
-                        key={size.productSizeId}
-                        onClick={() => setSelectedSizeId(size.productSizeId)}
-                        disabled={size.stockQuantity === 0}
+                        key={size.sizeId}
+                        onClick={() => handleSizeChange(size.sizeId)}
                         style={{
                           ...styles.sizeButton,
-                          ...(selectedSizeId === size.productSizeId
+                          ...(selectedDetail?.size?.sizeId === size.sizeId
                             ? styles.sizeButtonSelected
                             : {}),
-                          opacity: size.stockQuantity === 0 ? 0.5 : 1,
-                          cursor:
-                            size.stockQuantity === 0
-                              ? "not-allowed"
-                              : "pointer",
+                          ...(size.stockQuantity === 0 ? styles.sizeButtonDisabled : {}),
                         }}
+                        disabled={size.stockQuantity === 0}
+                        title={`${size.sizeValue} - Còn: ${size.stockQuantity}`}
                       >
                         {size.sizeValue}
                       </button>
@@ -756,7 +991,7 @@ const ProductDetails = () => {
                   <Text style={styles.quantityLabel}>Số Lượng:</Text>
                   <InputNumber
                     min={1}
-                    max={selectedSize ? selectedSize.stockQuantity : 1}
+                    max={selectedDetail ? selectedDetail.stockQuantity : 1}
                     value={quantity}
                     onChange={setQuantity}
                     style={styles.quantityInput}
@@ -794,8 +1029,7 @@ const ProductDetails = () => {
             </Col>
           </Row>
 
-          {/* Product Feedback Section */}
-          <ProductFeedback productId={productDetails?.productId} />
+          {/* Product feedback feature has been removed for simplicity */}
 
           {/* Related Products Section */}
           {relatedProducts.length > 0 && (

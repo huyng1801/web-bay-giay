@@ -11,7 +11,6 @@ import OrderPage from './pages/admin/OrderPage';
 import CustomerPage from './pages/admin/CustomerPage';
 import VoucherPage from './pages/admin/VoucherPage';
 import ShippingPage from './pages/admin/ShippingPage';
-import ProductFeedbackPage from './pages/admin/ProductFeedbackPage';
 
 import ColorPage from './pages/admin/ColorPage';
 import SizePage from './pages/admin/SizePage';
@@ -56,7 +55,6 @@ function App() {
           <Route path="/admin/customer" element={<CustomerPage />} /> 
           <Route path="/admin/voucher" element={<VoucherPage />} /> 
           <Route path="/admin/shipping" element={<ShippingPage />} />
-          <Route path="/admin/feedback" element={<ProductFeedbackPage />} /> 
 
           <Route path="/admin/colors" element={<ColorPage />} /> 
           <Route path="/admin/sizes" element={<SizePage />} /> 

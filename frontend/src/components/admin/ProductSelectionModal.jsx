@@ -1,17 +1,14 @@
 import React from 'react';
-import { Modal, Row, Col, Form, Select } from 'antd';
+import { Modal, Select, Empty } from 'antd';
 
 const { Option } = Select;
 
 const ProductSelectionModal = ({
   visible,
   selectedProduct,
-  productColors,
-  productSizes,
-  selectedColor,
-  selectedSize,
-  onColorChange,
-  onSizeChange,
+  productDetails,
+  selectedDetail,
+  onDetailChange,
   onCancel,
   onOk
 }) => {
@@ -29,25 +26,49 @@ const ProductSelectionModal = ({
     },
     productImage: {
       width: '100%', 
-      maxWidth: 200, 
+      maxWidth: 240, 
       height: 'auto',
       borderRadius: '8px',
       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
     },
-    colorSelect: {
+    selectContainer: {
+      marginTop: '16px'
+    },
+    selectLabel: {
+      fontWeight: 500, 
+      fontSize: 15, 
+      marginBottom: 8
+    },
+    detailSelect: {
       width: '100%'
     },
-    sizeSelect: {
-      width: '100%'
+    summaryBox: {
+      marginTop: 24, 
+      background: '#fffbe6', 
+      borderRadius: 8, 
+      padding: 12, 
+      textAlign: 'center', 
+      fontSize: 14
     }
   };
 
-  // Get selected color image
-  const getSelectedColorImage = () => {
-    if (!selectedColor || !productColors.length) return null;
-    const color = productColors.find(c => c.productColorId === selectedColor);
-    return color?.imageUrl;
+  // Group details by color for better UX
+  const groupedDetails = productDetails.reduce((acc, detail) => {
+    const colorName = detail.color?.colorName || 'Không xác định';
+    if (!acc[colorName]) {
+      acc[colorName] = [];
+    }
+    acc[colorName].push(detail);
+    return acc;
+  }, {});
+
+  // Get selected detail object
+  const getSelectedDetailObj = () => {
+    if (!selectedDetail || !productDetails.length) return null;
+    return productDetails.find(d => d.productDetailsId === selectedDetail);
   };
+
+  const selectedDetailObj = getSelectedDetailObj();
 
   return (
     <Modal
@@ -61,56 +82,52 @@ const ProductSelectionModal = ({
       onOk={onOk}
       okText="Thêm vào giỏ"
       cancelText="Hủy"
-      style={styles.modal}
+      width={600}
       destroyOnClose
     >
-
-
-      <Row gutter={24} style={{ marginBottom: 8 }}>
-        <Col span={12}>
-          <div style={{ fontWeight: 500, fontSize: 15, marginBottom: 8 }}>Chọn màu sắc</div>
-          <Select
-            placeholder="Chọn màu sắc"
-            value={selectedColor}
-            onChange={onColorChange}
-            style={styles.colorSelect}
-          >
-            {productColors.map((color) => (
-              <Option key={color.productColorId} value={color.productColorId}>
-                {color.colorName}
-              </Option>
-            ))}
-          </Select>
-        </Col>
-        <Col span={12}>
-          <div style={{ fontWeight: 500, fontSize: 15, marginBottom: 8 }}>Chọn size</div>
-          <Select
-            placeholder="Chọn size"
-            value={selectedSize}
-            onChange={onSizeChange}
-            style={styles.sizeSelect}
-            disabled={!selectedColor}
-          >
-            {productSizes.map((size) => (
-              <Option 
-                key={size.productSizeId} 
-                value={size.productSizeId}
-                disabled={size.stockQuantity <= 0}
-              >
-                {size.sizeValue} (Còn: {size.stockQuantity})
-              </Option>
-            ))}
-          </Select>
-        </Col>
-      </Row>
+      <div style={styles.selectContainer}>
+        <div style={styles.selectLabel}>Chọn màu sắc và kích thước</div>
+        <Select
+          placeholder="Chọn màu sắc và kích thước"
+          value={selectedDetail}
+          onChange={onDetailChange}
+          style={styles.detailSelect}
+          showSearch
+          optionFilterProp="children"
+          notFoundContent={<Empty description="Không có sản phẩm nào" />}
+        >
+          {Object.entries(groupedDetails).map(([colorName, details]) => (
+            <Select.OptGroup key={colorName} label={`Màu: ${colorName}`}>
+              {details.map((detail) => (
+                <Option 
+                  key={detail.productDetailsId} 
+                  value={detail.productDetailsId}
+                  disabled={!detail.isActive || detail.stockQuantity <= 0}
+                >
+                  <span style={{ fontWeight: 500 }}>
+                    {detail.color?.colorName} - Size {detail.size?.sizeValue}
+                  </span>
+                  <span style={{ 
+                    marginLeft: 8, 
+                    color: detail.stockQuantity > 10 ? '#52c41a' : detail.stockQuantity > 0 ? '#faad14' : '#ff4d4f',
+                    fontSize: 12
+                  }}>
+                    {detail.stockQuantity > 0 ? `(Còn: ${detail.stockQuantity})` : '(Hết hàng)'}
+                  </span>
+                </Option>
+              ))}
+            </Select.OptGroup>
+          ))}
+        </Select>
+      </div>
 
       {/* Product Image Preview */}
-      {selectedColor && getSelectedColorImage() && (
-        <div style={{ ...styles.imageContainer, marginTop: 24 }}>
+      {selectedProduct?.imageUrl && (
+        <div style={styles.imageContainer}>
           <img 
-            src={getSelectedColorImage()} 
+            src={selectedProduct.imageUrl} 
             alt="Product Preview"
-            style={{ ...styles.productImage, maxWidth: 240 }}
+            style={styles.productImage}
             onError={(e) => {
               e.target.style.display = 'none';
             }}
@@ -119,12 +136,18 @@ const ProductSelectionModal = ({
       )}
 
       {/* Selection Summary */}
-      {(selectedColor || selectedSize) && (
-        <div style={{ marginTop: 24, background: '#fffbe6', borderRadius: 8, padding: 12, textAlign: 'center', fontSize: 14 }}>
+      {selectedDetailObj && (
+        <div style={styles.summaryBox}>
           <span>Đã chọn: </span>
-          {selectedColor && <span>Màu {productColors.find(c => c.productColorId === selectedColor)?.colorName}</span>}
-          {selectedColor && selectedSize && <span> | </span>}
-          {selectedSize && <span>Size {productSizes.find(s => s.productSizeId === selectedSize)?.sizeValue}</span>}
+          <span style={{ fontWeight: 600 }}>
+            Màu {selectedDetailObj.color?.colorName} | Size {selectedDetailObj.size?.sizeValue}
+          </span>
+          <span style={{ 
+            marginLeft: 8,
+            color: selectedDetailObj.stockQuantity > 10 ? '#52c41a' : '#faad14'
+          }}>
+            (Còn {selectedDetailObj.stockQuantity} sản phẩm)
+          </span>
         </div>
       )}
     </Modal>

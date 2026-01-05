@@ -23,7 +23,7 @@ import java.util.Set;
  * Một danh mục có thể chứa nhiều danh mục con (SubCategory)
  */
 @Entity
-@Table(name = "category")
+@Table(name = "danh_muc")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,23 +32,24 @@ public class Category {
     // ID duy nhất của danh mục, tự động tăng
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ma_danh_muc")
     private Integer categoryId;
 
     // Tên danh mục, phải duy nhất
-    @Column(name = "category_name", nullable = false, unique = true, length = 50, columnDefinition = "NVARCHAR(50)")
+    @Column(name = "ten_danh_muc", nullable = false, unique = true, length = 50, columnDefinition = "NVARCHAR(50)")
     private String categoryName;
 
     // Trạng thái kích hoạt danh mục
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "trang_thai_kich_hoat", nullable = false)
     private Boolean isActive = true;
 
     // Thời gian tạo danh mục
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "thoi_gian_tao", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
 
     // Thời gian cập nhật lần cuối
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "thoi_gian_cap_nhat", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 

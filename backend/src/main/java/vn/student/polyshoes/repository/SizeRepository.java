@@ -19,18 +19,18 @@ import java.util.List;
 public interface SizeRepository extends JpaRepository<Size, Integer> {
     
     // Lấy tất cả kích cỡ đang hoạt động, sắp xếp theo giá trị số tăng dần
-    @Query("SELECT s FROM Size s WHERE s.isActive = true ORDER BY CAST(s.sizeValue AS int) ASC")
+    @Query("SELECT s FROM Size s WHERE s.isActive = true ORDER BY CAST(s.sizeValue AS float) ASC")
     List<Size> findByIsActiveTrueOrderBySizeValue();
     
     // Tìm kiếm kích cỡ theo giá trị (không phân biệt chính xác)
-    @Query("SELECT s FROM Size s WHERE s.sizeValue LIKE %:sizeValue% ORDER BY CAST(s.sizeValue AS int) ASC")
+    @Query("SELECT s FROM Size s WHERE s.sizeValue LIKE %:sizeValue% ORDER BY CAST(s.sizeValue AS float) ASC")
     List<Size> findBySizeValueContaining(@Param("sizeValue") String sizeValue);
     
     // Lấy danh sách kích cỡ với các bộ lọc và phân trang
     @Query("SELECT s FROM Size s WHERE " +
            "(:sizeValue IS NULL OR s.sizeValue LIKE %:sizeValue%) AND " +
            "(:isActive IS NULL OR s.isActive = :isActive) " +
-           "ORDER BY CAST(s.sizeValue AS int) ASC")
+           "ORDER BY CAST(s.sizeValue AS float) ASC")
     Page<Size> findWithFilters(@Param("sizeValue") String sizeValue,
                               @Param("isActive") Boolean isActive,
                               Pageable pageable);

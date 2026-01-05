@@ -10,7 +10,7 @@ public class ColorDto {
     
     // Tên màu sản phẩm (tiếng Việt)
     @NotBlank(message = "Tên màu không được để trống")
-    @Size(max = 50, message = "Tên màu không được vượt quá 50 ký tự")
+    @Size(max = 50, message = "Tên màu không vượt quá 50 ký tự")
     private String colorName;
     
     // Trạng thái hoạt động (mặc định: true)

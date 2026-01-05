@@ -10,17 +10,17 @@ import jakarta.validation.constraints.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderItemDto {
-    // ID của ProductSize (kích cở sản phẩm)
-    @NotNull(message = "Product size ID must not be null")
-    private Integer productSizeId;
+    // ID của ProductDetails (chi tiết sản phẩm)
+        @NotNull(message = "ID chi tiết sản phẩm không được để trống")
+    private Integer productDetailsId;
 
     // Số lượng sản phẩm đắt (> 0)
-    @NotNull(message = "Quantity must not be null")
-    @Positive(message = "Quantity must be greater than 0")
+        @NotNull(message = "Số lượng không được để trống")
+        @Positive(message = "Số lượng phải lớn hơn 0")
     private Integer quantity;
 
     // Giá tiền của sản phẩm
-    @NotNull(message = "Price must not be null")
-    @PositiveOrZero(message = "Price must be zero or positive")
+        @NotNull(message = "Giá không được để trống")
+        @PositiveOrZero(message = "Giá phải lớn hơn hoặc bằng 0")
     private Long price;
 }

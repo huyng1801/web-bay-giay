@@ -16,10 +16,10 @@ import java.util.List;
 public class ProductColorImageDto {
 
     // ID của màu sản phẩm
-    @NotNull(message = "Product color ID cannot be null")
+    @NotNull(message = "ID màu sản phẩm không được để trống")
     private Integer productColorId;
 
     // Danh sách hình ảnh của màu đó (có thể up nhiều hình)
-    @NotNull(message = "Image files cannot be null")
+    @NotNull(message = "Danh sách hình ảnh không được để trống")
     private List<MultipartFile> imageFiles;  // Allows multiple images
 }

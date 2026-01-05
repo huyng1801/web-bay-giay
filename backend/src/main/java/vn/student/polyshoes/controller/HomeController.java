@@ -12,47 +12,44 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import vn.student.polyshoes.dto.GuestDto;
+import vn.student.polyshoes.dto.CustomerDto;
 import vn.student.polyshoes.dto.LoginUserDto;
 import vn.student.polyshoes.dto.OrderDto;
 import vn.student.polyshoes.dto.OrderItemDto;
 import vn.student.polyshoes.dto.OrderRequestDto;
-import vn.student.polyshoes.dto.ProductFeedbackDto;
 import vn.student.polyshoes.dto.RegisterDto;
-import vn.student.polyshoes.dto.ShippingDto;
 import vn.student.polyshoes.enums.Gender;
 import vn.student.polyshoes.exception.InvalidCredentialsException;
 import vn.student.polyshoes.exception.ResourceNotFoundException;
 import vn.student.polyshoes.model.Banner;
 import vn.student.polyshoes.model.Customer;
+import vn.student.polyshoes.model.CustomerAddress;
+import vn.student.polyshoes.model.ProductDetails;
 import vn.student.polyshoes.model.Voucher;
 import vn.student.polyshoes.response.CategoryResponse;
 import vn.student.polyshoes.response.CustomerResponse;
 import vn.student.polyshoes.response.OrderResponse;
 import vn.student.polyshoes.response.OrderStatusHistoryResponse;
-import vn.student.polyshoes.response.ProductColorImageResponse;
-import vn.student.polyshoes.response.ProductColorResponse;
-import vn.student.polyshoes.response.ProductFeedbackResponse;
+import vn.student.polyshoes.response.ProductDetailsResponse;
 import vn.student.polyshoes.response.ProductResponse;
-import vn.student.polyshoes.response.ProductSizeResponse;
+import vn.student.polyshoes.response.ProductImageResponse;
 import vn.student.polyshoes.response.SubCategoryResponse;
 import vn.student.polyshoes.service.BannerService;
 import vn.student.polyshoes.service.CategoryService;
 import vn.student.polyshoes.service.CustomerService;
 import vn.student.polyshoes.service.HomeService;
 import vn.student.polyshoes.service.OrderService;
+import vn.student.polyshoes.service.OrderShippingService;
 import vn.student.polyshoes.service.OrderStatusHistoryService;
-import vn.student.polyshoes.service.ProductColorImageService;
-import vn.student.polyshoes.service.ProductColorService;
-import vn.student.polyshoes.service.ProductFeedbackService;
+import vn.student.polyshoes.service.ProductDetailsService;
+import vn.student.polyshoes.service.ProductImageService;
 import vn.student.polyshoes.service.ProductService;
-import vn.student.polyshoes.service.ProductSizeService;
-import vn.student.polyshoes.service.ShippingService;
 import vn.student.polyshoes.service.SubCategoryService;
 import vn.student.polyshoes.service.VoucherService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 // Đánh dấu đây là REST controller, xử lý các API liên quan đến trang chủ
@@ -71,13 +68,9 @@ public class HomeController {
     @Autowired
     private ProductService productService;
     @Autowired
-    private ProductColorService productColorService;
+    private ProductDetailsService productDetailsService;
     @Autowired
-    private ProductSizeService productSizeService;
-    @Autowired
-    private ProductColorImageService productColorImageService;
-    @Autowired
-    private ProductFeedbackService productFeedbackService;
+    private ProductImageService productImageService;
     @Autowired
     private OrderService orderService;
     @Autowired
@@ -85,11 +78,13 @@ public class HomeController {
     @Autowired
     private CustomerService customerService;
     @Autowired
-    private ShippingService shippingService;
-    @Autowired
     private VoucherService voucherService;
     @Autowired
     private HomeService homeService;
+    @Autowired
+    private OrderShippingService orderShippingService;
+    @Autowired
+    private vn.student.polyshoes.repository.CustomerAddressRepository customerAddressRepository;
 
     // ========== API banner ========== 
     // Lấy danh sách banner
@@ -137,82 +132,37 @@ public class HomeController {
         return ResponseEntity.ok(productResponse);
     }
 
-    // Lấy danh sách màu sắc của sản phẩm
-    @GetMapping("product-color/{productId}")
-    public ResponseEntity<List<ProductColorResponse>> findByProductId(@PathVariable Integer productId) {
-        return ResponseEntity.ok(productColorService.findByProduct_ProductId(productId));
+    // Lấy danh sách chi tiết sản phẩm theo productId (màu sắc và kích cỡ)
+    @GetMapping("product-details/{productId}")
+    public ResponseEntity<List<ProductDetailsResponse>> getProductDetailsByProductId(@PathVariable Integer productId) {
+        return ResponseEntity.ok(productDetailsService.getProductDetailsResponseByProductId(productId));
     }
 
-    // Lấy danh sách size của màu sắc sản phẩm
-    @GetMapping("product-size/product-color/{productColorId}")
-    public ResponseEntity<List<ProductSizeResponse>> findByProductColorId(@PathVariable Integer productColorId) {
-        return ResponseEntity.ok(productSizeService.findByProductColorId(productColorId));
+    // Lấy danh sách chi tiết sản phẩm khả dụng theo productId
+    @GetMapping("product-details/available/{productId}")
+    public ResponseEntity<List<ProductDetailsResponse>> getAvailableProductDetailsByProductId(@PathVariable Integer productId) {
+        List<ProductDetails> availableDetails = productDetailsService.getAvailableProductDetailsByProductId(productId);
+        List<ProductDetailsResponse> response = availableDetails.stream()
+                .map(productDetailsService::mapToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
-    // Lấy danh sách hình ảnh của màu sắc sản phẩm
-    @GetMapping("product-image/product-color/{productColorId}")
-    public ResponseEntity<List<ProductColorImageResponse>> getImagesByProductColorId(@PathVariable Integer productColorId) {
-        return ResponseEntity.ok(productColorImageService.findByProductColorId(productColorId));
-    }
-
-    // ========== API đánh giá sản phẩm ========== 
-    // Tạo đánh giá cho sản phẩm
-    @PostMapping("feedback")
-    public ResponseEntity<ProductFeedbackResponse> createProductFeedback(@RequestBody ProductFeedbackDto feedbackDto) {
-        try {
-            ProductFeedbackResponse response = productFeedbackService.createFeedback(feedbackDto);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).build();
-        }
-    }
-
-    // Lấy danh sách đánh giá theo sản phẩm
-    @GetMapping("feedback/product/{productId}")
-    public ResponseEntity<List<ProductFeedbackResponse>> getFeedbacksByProduct(@PathVariable Integer productId) {
-        try {
-            List<ProductFeedbackResponse> feedbacks = productFeedbackService.getFeedbacksByProduct(productId);
-            return ResponseEntity.ok(feedbacks);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).build();
-        }
-    }
-
-    // Get feedbacks by customer and order
-    // Lấy đánh giá theo khách hàng và đơn hàng
-    @GetMapping("feedback/customer/{customerId}/order/{orderId}")
-    public ResponseEntity<List<ProductFeedbackResponse>> getFeedbacksByCustomerAndOrder(
-            @PathVariable Integer customerId, 
-            @PathVariable String orderId) {
-        try {
-            List<ProductFeedbackResponse> feedbacks = productFeedbackService.getFeedbacksByCustomerAndOrder(customerId, orderId);
-            return ResponseEntity.ok(feedbacks);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).build();
-        }
-    }
-
-    // Lấy top đánh giá nổi bật cho trang chủ
-    @GetMapping("reviews/top")
-    public ResponseEntity<List<ProductFeedbackResponse>> getTopReviews(
-            @RequestParam(value = "limit", defaultValue = "4") int limit) {
-        try {
-            List<ProductFeedbackResponse> topReviews = productFeedbackService.getTopReviews(limit);
-            return ResponseEntity.ok(topReviews);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).build();
-        }
+    // Lấy danh sách hình ảnh của sản phẩm
+    @GetMapping("product-image/{productId}")
+    public ResponseEntity<List<ProductImageResponse>> getImagesByProductId(@PathVariable Integer productId) {
+        return ResponseEntity.ok(productImageService.getProductImagesResponseByProductId(productId));
     }
 
     // ========== API đơn hàng ========== 
     // Tạo mới đơn hàng
     @PostMapping("orders")
     public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequestDto orderRequestDto) {
-        GuestDto guestDto = orderRequestDto.getGuestDto();
+        CustomerDto customerDto = orderRequestDto.getCustomerDto();
         OrderDto orderDto = orderRequestDto.getOrderDto();
         int customerId = orderRequestDto.getCustomerId();
         List<OrderItemDto> orderItemDtos = orderRequestDto.getOrderItemDtos();
-        OrderResponse orderResponse = orderService.createOrder(customerId, guestDto, orderDto, orderItemDtos);
+        OrderResponse orderResponse = orderService.createOrder(customerId, customerDto, orderDto, orderItemDtos);
         return ResponseEntity.ok(orderResponse);
     }
 
@@ -360,7 +310,7 @@ public class HomeController {
             String token = customerService.login(loginDto);
             return ResponseEntity.ok(token);
         } catch (ResourceNotFoundException | InvalidCredentialsException e) {
-            return ResponseEntity.status(401).body("Invalid credentials.");
+            return ResponseEntity.status(401).body("Thông tin đăng nhập không hợp lệ");
         }
     }
 
@@ -384,28 +334,36 @@ public class HomeController {
         return ResponseEntity.ok(toCustomerResponse(customer));
     }
 
-    // ========== API shipping ========== 
-    // Lấy danh sách shipping đang hoạt động
-    @GetMapping("shippings/active")
-    public ResponseEntity<List<ShippingDto>> getActiveShippings() {
-        try {
-            List<ShippingDto> shippings = shippingService.getActiveShippings();
-            return ResponseEntity.ok(shippings);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).build();
+    // Lấy địa chỉ mặc định của khách hàng
+    @GetMapping("customer/{customerId}/addresses/default")
+    public ResponseEntity<CustomerAddress> getCustomerDefaultAddress(@PathVariable Integer customerId) {
+        Customer customer = customerService.getCustomerById(customerId);
+        if (customer == null) {
+            return ResponseEntity.notFound().build();
         }
+
+        // Get default address from CustomerAddress repository
+        Optional<CustomerAddress> defaultAddress = customerAddressRepository.findDefaultAddressByCustomerId(customerId);
+
+        if (defaultAddress.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(defaultAddress.get());
     }
 
-    // Lấy danh sách shipping theo loại
-    @GetMapping("shippings/type/{shippingType}")
-    public ResponseEntity<List<ShippingDto>> getShippingsByType(@PathVariable String shippingType) {
-        try {
-            List<ShippingDto> shippings = shippingService.getShippingsByType(shippingType);
-            return ResponseEntity.ok(shippings);
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body(null);
+    // Lấy tất cả địa chỉ của khách hàng
+    @GetMapping("customer/{customerId}/addresses")
+    public ResponseEntity<List<CustomerAddress>> getCustomerAddresses(@PathVariable Integer customerId) {
+        Customer customer = customerService.getCustomerById(customerId);
+        if (customer == null) {
+            return ResponseEntity.notFound().build();
         }
+
+        // Get all addresses from CustomerAddress repository
+        List<CustomerAddress> addresses = customerAddressRepository.findByCustomerCustomerId(customerId);
+
+        return ResponseEntity.ok(addresses);
     }
 
     // Hàm hỗ trợ: chuyển đổi từ Customer sang CustomerResponse
@@ -415,9 +373,6 @@ public class HomeController {
                 customer.getFullName(),
                 customer.getEmail(),
                 customer.getPhone(),
-                customer.getAddress(),
-                customer.getAddress2(),
-                customer.getCity(),
                 customer.getIsActive()
         );
     }
@@ -458,6 +413,37 @@ public class HomeController {
             return ResponseEntity.badRequest().body(null);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    // ========== API shipping ========== 
+    
+    // Tính cước phí vận chuyển tối ưu
+    @PostMapping("calculate-fee")
+    public ResponseEntity<Map<String, Object>> calculateOptimalShippingFee(
+            @RequestParam Integer toDistrictId,
+            @RequestParam String toWardCode,
+            @RequestParam Long orderValue,
+            @RequestParam(required = false) Integer weight,
+            @RequestParam(required = false) Integer length,
+            @RequestParam(required = false) Integer width,
+            @RequestParam(required = false) Integer height) {
+        try {
+            // Gọi service để tính phí vận chuyển tối ưu
+            Map<String, Object> result = orderShippingService.calculateOptimalShippingFee(
+                toDistrictId, toWardCode, orderValue,
+                weight, length, width, height
+            );
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of(
+                "success", false,
+                "shippingFee", 30000,
+                "serviceName", "Giao hàng tiêu chuẩn", 
+                "estimatedTime", "3-5 ngày",
+                "message", "Lỗi khi tính cước, sử dụng phí mặc định"
+            ));
         }
     }
 

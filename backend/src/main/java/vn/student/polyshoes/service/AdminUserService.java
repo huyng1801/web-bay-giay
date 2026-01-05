@@ -46,7 +46,6 @@ public class AdminUserService {
         user.setFullName(userDto.getFullName());
         user.setPhone(userDto.getPhone());
         user.setAddress(userDto.getAddress());
-        user.setAddress2(userDto.getAddress2());
         user.setRole(userDto.getRole());
         user.setIsActive(userDto.getIsActive());
         user.setUpdatedAt(new Date());
@@ -87,7 +86,10 @@ public class AdminUserService {
     
 
     public void deleteUser(String userId) {
-        userRepository.delete(findUserById(userId));
+        AdminUser user = findUserById(userId);
+        if (user != null) {
+            userRepository.delete(user);
+        }
     }
 
     public AdminUserResponse getUserById(String userId) {
@@ -128,7 +130,6 @@ public class AdminUserService {
         user.setFullName(profileDto.getFullName());
         user.setPhone(profileDto.getPhone());
         user.setAddress(profileDto.getAddress());
-        user.setAddress2(profileDto.getAddress2());
         user.setUpdatedAt(new Date());
         
         userRepository.save(user);
@@ -149,8 +150,9 @@ public class AdminUserService {
         return true;
     }
 
-    private AdminUser findUserById(String userId) {
-        return userRepository.findById(userId)
+    private AdminUser findUserById(String userId) {        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }        return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
     }
 
@@ -159,7 +161,6 @@ public class AdminUserService {
         user.setFullName(userDto.getFullName());
         user.setPhone(userDto.getPhone());
         user.setAddress(userDto.getAddress());
-        user.setAddress2(userDto.getAddress2());
         user.setRole(userDto.getRole());
         user.setIsActive(userDto.getIsActive());
     }
@@ -171,7 +172,6 @@ public class AdminUserService {
             user.getFullName(),
             user.getPhone(),
             user.getAddress(),
-            user.getAddress2(),
             user.getRole(),
             user.getIsActive(),
             user.getCreatedAt(),

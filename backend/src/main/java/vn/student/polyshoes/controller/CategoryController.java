@@ -10,6 +10,9 @@ import jakarta.validation.Valid;
 import vn.student.polyshoes.dto.CategoryDto;
 import vn.student.polyshoes.exception.ResourceNotFoundException;
 import vn.student.polyshoes.response.CategoryResponse;
+import vn.student.polyshoes.model.Category;
+import vn.student.polyshoes.response.ErrorResponse;
+import vn.student.polyshoes.response.ToggleStatusResponse;
 import vn.student.polyshoes.service.CategoryService;
 import vn.student.polyshoes.util.ValidationUtils;
 
@@ -52,7 +55,7 @@ public class CategoryController {
         }
         // Kiểm tra tên danh mục đã tồn tại chưa
         if (categoryService.isCategoryNameExists(categoryDto.getCategoryName())) {
-            return ResponseEntity.badRequest().body("Category name already exists");
+            return ResponseEntity.badRequest().body("Tên danh mục đã tồn tại");
         }
         CategoryResponse createdCategory = categoryService.createCategory(categoryDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
@@ -67,7 +70,7 @@ public class CategoryController {
         getCategoryOrThrow(categoryId);
         // Kiểm tra tên danh mục đã tồn tại ở id khác chưa
         if (categoryService.isCategoryNameExistsForOtherId(categoryDto.getCategoryName(), categoryId)) {
-            return ResponseEntity.badRequest().body("Category name already exists for another category");
+            return ResponseEntity.badRequest().body("Tên danh mục đã tồn tại cho danh mục khác");
         }
         CategoryResponse updatedCategory = categoryService.updateCategory(categoryId, categoryDto);
         return ResponseEntity.ok(updatedCategory);
@@ -78,7 +81,7 @@ public class CategoryController {
     public ResponseEntity<?> deleteCategory(@PathVariable("id") Integer categoryId) {
         boolean isDeleted = categoryService.deleteCategory(categoryId);
         if (!isDeleted) {
-            throw new ResourceNotFoundException("Category with ID " + categoryId + " not found");
+            throw new ResourceNotFoundException("Không tìm thấy danh mục với ID " + categoryId);
         }
         return ResponseEntity.noContent().build();
     }
@@ -87,12 +90,11 @@ public class CategoryController {
     @PutMapping("/{id}/toggle-status")
     public ResponseEntity<?> toggleCategoryStatus(@PathVariable("id") Integer categoryId) {
         try {
-            vn.student.polyshoes.model.Category category = categoryService.toggleCategoryStatus(categoryId);
-            vn.student.polyshoes.response.ToggleStatusResponse response = 
-                new vn.student.polyshoes.response.ToggleStatusResponse(category.getCategoryId(), category.getIsActive());
+            Category category = categoryService.toggleCategoryStatus(categoryId);
+            ToggleStatusResponse response = new ToggleStatusResponse(category.getCategoryId(), category.getIsActive());
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return badRequest(e.getMessage());
+            return badRequest("Lỗi khi đổi trạng thái danh mục: " + e.getMessage());
         }
     }
 
@@ -100,7 +102,7 @@ public class CategoryController {
     private CategoryResponse getCategoryOrThrow(Integer categoryId) {
         CategoryResponse categoryResponse = categoryService.getCategoryById(categoryId);
         if (categoryResponse == null) {
-            throw new ResourceNotFoundException("Category with ID " + categoryId + " not found");
+            throw new ResourceNotFoundException("Không tìm thấy danh mục với ID " + categoryId);
         }
         return categoryResponse;
     }
@@ -112,7 +114,7 @@ public class CategoryController {
 
     // Hàm hỗ trợ: trả về lỗi với thông báo tuỳ chỉnh
     private ResponseEntity<?> badRequest(String message) {
-        vn.student.polyshoes.response.ErrorResponse errorResponse = new vn.student.polyshoes.response.ErrorResponse(message, 400);
+        ErrorResponse errorResponse = new ErrorResponse(message, 400);
         return ResponseEntity.badRequest().body(errorResponse);
     }
 }

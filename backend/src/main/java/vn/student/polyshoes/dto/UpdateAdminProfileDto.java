@@ -13,8 +13,6 @@ public class UpdateAdminProfileDto {
     private String fullName;
     // Số điện thoại
     private String phone;
-    // Địa chỉ chính
+    // Địa chỉ
     private String address;
-    // Địa chỉ thứ hai
-    private String address2;
 }

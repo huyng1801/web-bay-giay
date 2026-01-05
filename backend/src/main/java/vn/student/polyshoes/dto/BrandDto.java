@@ -15,8 +15,8 @@ import lombok.NoArgsConstructor;
 public class BrandDto {
 
     // Tên của thương hiệu
-    @NotBlank(message = "Brand name is required")
-    @Size(max = 50, message = "Brand name must not exceed 50 characters")
+    @NotBlank(message = "Tên thương hiệu là bắt buộc")
+    @Size(max = 50, message = "Tên thương hiệu không vượt quá 50 ký tự")
     private String brandName;
 
     // Trạng thái hoạt động (mặc định: true)

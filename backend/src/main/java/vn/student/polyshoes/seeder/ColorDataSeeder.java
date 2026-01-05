@@ -35,33 +35,44 @@ public class ColorDataSeeder {
             if (colorRepository.count() == 0) { // Ngăn chặn tạo dữ liệu trùng lặp
                 logger.info("Bắt đầu khởi tạo dữ liệu màu sắc giày...");
 
-                // Danh sách các màu sắc giày phổ biến
+                // Danh sách các màu sắc giày phổ biến và thời thượng
                 List<String> shoeColors = Arrays.asList(
-                    "Đen",      // Màu cổ điển, phù hợp đa dạng
-                    "Trắng",    // Màu trung tính, tưới sáng
-                    "Xanh navy", // Màu đen xanh, chuyên nghiệp
-                    "Xam",      // Màu trung tính
-                    "Nâu",      // Màu ấm, phong cách casual
-                    "Đỏ",       // Màu nổi bật
-                    "Xanh dương",// Màu biển
-                    "Xanh lá",  // Màu tự nhiên
-                    "Vàng",     // Màu sáng, năng động
-                    "Hồng",     // Màu tưới vui
-                    "Bạc",      // Màu hiện đại, lạnh
-                    "Tím",      // Màu quý phái
-                    "Cam",      // Màu ấm áp
-                    "Đen trắng",// Tổ hợp màu cổ điển
-                    "Trắng xanh",// Tổ hợp màu sáng
-                    "Trắng đỏ", // Tổ hợp màu nổi bật
-                    "Trắng vàng",// Tổ hợp màu ấm
-                    "Đen đỏ",   // Tổ hợp màu mạnh mẽ
-                    "Đen xám",  // Tổ hợp màu trung tính
-                    "Xám trắng",// Tổ hợp màu nhẹ
-                    "Nâu đỏ",   // Tổ hợp màu ấm
-                    "Nâu sáng" // Tổ hợp màu tưới
+                    // Màu cơ bản
+                    "Đen",                    // Màu cổ điển, dễ phối đồ
+                    "Trắng",                  // Màu sạch, thoáng mát
+                    "Xám",                    // Màu trung tính, thanh lịch
+                    "Nâu",                    // Màu ấm, phù hợp mùa thu đông
+                    "Xám đậm",               // Xám đậm, chuyên nghiệp
+                    "Xám nhạt",               // Xám sáng, nhẹ nhàng
+                    
+                    // Màu nổi bật
+                    "Đỏ",                     // Màu nổi bật, thể thao
+                    "Xanh navy",              // Xám xanh, chuyên nghiệp
+                    "Xanh dương",            // Màu biển, tươi mát
+                    "Xanh lá",               // Màu tự nhiên
+                    "Vàng",                   // Màu sáng, năng động
+                    "Hồng",                   // Màu nữ tính
+                    "Cam",                    // Màu ấm, hưng phấn
+                    "Tím",                    // Màu quý phái
+                    
+                    // Tổ hợp màu phổ biến
+                    "Đen trắng",             // Tổ hợp kinh điển
+                    "Trắng đen",             // Ngược lại của đen trắng
+                    "Trắng xanh",            // Tổ hợp sáng, tươi mát
+                    "Trắng đỏ",             // Tổ hợp ấm tương
+                    "Đen đỏ",               // Tổ hợp mạnh mẽ
+                    "Xám trắng",             // Tổ hợp nhẹ nhàng
+                    "Nâu đậm",               // Nâu đậm, sang trọng
+                    
+                    // Màu kim loại và đặc biệt
+                    "Bạc",                   // Màu kim loại hiện đại
+                    "Vàng kim",               // Vàng kim loại
+                    "Holographic",           // Màu cháy đọc sắc
+                    "Gradient"              // Màu chuyển đổi
                 );
 
                 // Lặp qua từng màu và lưu vào database
+                int colorCount = 0;
                 for (String colorName : shoeColors) {
                     Color color = new Color();
                     color.setColorName(colorName);
@@ -69,12 +80,13 @@ public class ColorDataSeeder {
                     color.setCreatedAt(new Date());
                     color.setUpdatedAt(new Date());
                     colorRepository.save(color);
+                    colorCount++;
                     logger.debug("Đã tạo màu giày: {}", colorName);
                 }
 
-                logger.info("Khởi tạo {} màu sắc giày thành công", shoeColors.size());
+                logger.info("Đã khởi tạo thành công {} màu sắc giày!", colorCount);
             } else {
-                logger.info("Dữ liệu màu sắc đã tồn tại, bỏ qua khởi tạo");
+                logger.info("Dữ liệu màu sắc đã tồn tại, bỏ qua khởi tạo.");
             }
         };
     }

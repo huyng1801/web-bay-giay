@@ -11,7 +11,9 @@ import vn.student.polyshoes.enums.Role;
 import vn.student.polyshoes.exception.InvalidCredentialsException;
 import vn.student.polyshoes.exception.ResourceNotFoundException;
 import vn.student.polyshoes.model.Customer;
+import vn.student.polyshoes.model.CustomerAddress;
 import vn.student.polyshoes.repository.CustomerRepository;
+import vn.student.polyshoes.repository.CustomerAddressRepository;
 
 import java.util.List;
 import java.util.Date;
@@ -22,6 +24,8 @@ public class CustomerService {
 
     @Autowired
     private CustomerRepository customerRepository;
+    @Autowired
+    private CustomerAddressRepository customerAddressRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -46,6 +50,7 @@ public class CustomerService {
         }
         
         Customer customer = new Customer();
+        customer.setCustomerType(vn.student.polyshoes.enums.CustomerType.REGISTERED);
         customer.setFullName(customerDto.getFullName());
         customer.setEmail(customerDto.getEmail());
         String password = customerDto.getHashPassword();
@@ -55,9 +60,6 @@ public class CustomerService {
         customer.setHashPassword(passwordEncoder.encode(password));
         customer.setEmailConfirmed(false);
         customer.setPhone(customerDto.getPhone());
-        customer.setAddress(customerDto.getAddress());
-        customer.setAddress2(customerDto.getAddress2());
-        customer.setCity(customerDto.getCity());
         Date now = new Date();
         customer.setCreatedAt(now);
         customer.setUpdatedAt(now);
@@ -105,9 +107,6 @@ public class CustomerService {
             customer.setHashPassword(passwordEncoder.encode(customerDto.getHashPassword()));
         }
         customer.setPhone(customerDto.getPhone());
-        customer.setAddress(customerDto.getAddress());
-        customer.setAddress2(customerDto.getAddress2());
-        customer.setCity(customerDto.getCity());
         customer.setUpdatedAt(new Date());
         return customerRepository.save(customer);
     }
@@ -121,18 +120,31 @@ public class CustomerService {
             throw new IllegalArgumentException("Email is already in use.");
         }
         Customer customer = new Customer();
+        customer.setCustomerType(vn.student.polyshoes.enums.CustomerType.REGISTERED);
         customer.setFullName(registerDto.getFullName());
         customer.setEmail(registerDto.getEmail());
         customer.setHashPassword(passwordEncoder.encode(registerDto.getPassword()));
         customer.setEmailConfirmed(true);
         customer.setPhone(registerDto.getPhone());
-        customer.setAddress(registerDto.getAddress());
-        customer.setAddress2(registerDto.getAddress2());
-        customer.setCity(registerDto.getCity());
         Date now = new Date();
         customer.setCreatedAt(now);
         customer.setUpdatedAt(now);
-        return customerRepository.save(customer);
+        Customer savedCustomer = customerRepository.save(customer);
+
+        // Tạo địa chỉ cho khách hàng
+        CustomerAddress address = new CustomerAddress();
+        address.setCustomer(savedCustomer);
+        address.setAddress(registerDto.getAddress());
+        address.setGhnProvinceId(registerDto.getProvinceId());
+        address.setGhnDistrictId(registerDto.getDistrictId());
+        address.setGhnWardCode(registerDto.getWardCode());
+        address.setIsDefault(true); // Địa chỉ đầu tiên là mặc định
+        address.setAddressType("HOME");
+        address.setCreatedAt(now);
+        address.setUpdatedAt(now);
+        customerAddressRepository.save(address);
+
+        return savedCustomer;
     }
 
     public String login(LoginUserDto loginDto) {

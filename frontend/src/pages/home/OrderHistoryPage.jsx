@@ -5,7 +5,14 @@ import OrderCard from '../../components/order/OrderCard';
 import FeedbackModal from '../../components/order/FeedbackModal';
 import EmptyOrderState from '../../components/order/EmptyOrderState';
 import OrderStatusHistory from '../../components/order/OrderStatusHistory';
-import { getCustomerByEmail, getOrdersByCustomerId, getOrderStatusHistory, cancelOrder, createProductFeedback, getFeedbacksByCustomerAndOrder } from '../../services/home/HomeService';
+import { 
+    getOrdersByCustomerId, 
+    cancelOrder, 
+    getOrderStatusHistory, 
+    getCustomerByEmail,
+    getProductById,
+    getProductDetailsByProductId 
+} from '../../services/home/HomeService';
 import { formatDate } from '../../utils/formatters';
 
 import { jwtDecode } from 'jwt-decode';
@@ -70,6 +77,7 @@ const OrderHistoryPage = () => {
     const [customerInfo, setCustomerInfo] = useState(null);
     const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [productDetails, setProductDetails] = useState({}); // Store product details
 
     const [statusHistoryVisible, setStatusHistoryVisible] = useState(false);
     const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -79,6 +87,65 @@ const OrderHistoryPage = () => {
     
     // Form instance for feedback modal
     const [feedbackForm] = Form.useForm();
+    
+    // Load product details for order items
+    const loadProductDetailsForOrders = async (orders) => {
+        const details = {};
+        
+        for (const order of orders) {
+            if (order.orderItems) {
+                for (const item of order.orderItems) {
+                    try {
+                        // Get product details using productDetailsId
+                        if (item.productDetailsId && !details[item.productDetailsId]) {
+                            const [productData, allProductDetails] = await Promise.allSettled([
+                                getProductById(item.productDetailsId), // This might need adjustment based on your API
+                                getProductDetailsByProductId(item.productDetailsId)
+                            ]);
+                            
+                            const product = productData.status === 'fulfilled' ? productData.value : null;
+                            const productDetailsArray = allProductDetails.status === 'fulfilled' ? allProductDetails.value : [];
+                            
+                            // Find the specific product detail that matches this item
+                            const specificDetail = productDetailsArray.find(detail => 
+                                detail.productDetailsId === item.productDetailsId
+                            ) || productDetailsArray[0]; // Fallback to first if exact match not found
+                            
+                            if (product && specificDetail) {
+                                details[item.productDetailsId] = {
+                                    ...product,
+                                    ...specificDetail,
+                                    productName: product.productName || specificDetail.productName || 'Sản phẩm không xác định',
+                                    colorName: specificDetail.color?.colorName || specificDetail.color?.tenMau || 'Không xác định',
+                                    sizeValue: specificDetail.size?.sizeValue || specificDetail.size?.giaTri || 'Không xác định',
+                                    imageUrl: product.mainImageUrl || specificDetail.imageUrl || '/placeholder-image.jpg',
+                                };
+                            } else {
+                                // Fallback if API calls fail
+                                details[item.productDetailsId] = {
+                                    productName: 'Sản phẩm không xác định',
+                                    colorName: 'Không xác định',
+                                    sizeValue: 'Không xác định',
+                                    imageUrl: '/placeholder-image.jpg',
+                                };
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Error loading product details for ${item.productDetailsId}:`, error);
+                        // Provide fallback data
+                        details[item.productDetailsId] = {
+                            productName: 'Sản phẩm không xác định',
+                            colorName: 'Không xác định', 
+                            sizeValue: 'Không xác định',
+                            imageUrl: '/placeholder-image.jpg',
+                        };
+                    }
+                }
+            }
+        }
+        
+        setProductDetails(details);
+    };
 
     useEffect(() => {
         const fetchOrderHistory = async () => {
@@ -113,6 +180,11 @@ const OrderHistoryPage = () => {
                     console.log('Fetched order history:', orderHistory);
                     setOrders(orderHistory || []);
                     
+                    // Load product details for all order items
+                    if (orderHistory && orderHistory.length > 0) {
+                        await loadProductDetailsForOrders(orderHistory);
+                    }
+                    
                     // Load status history for all orders
                     if (orderHistory && orderHistory.length > 0) {
                         const historyPromises = orderHistory.map(async (order) => {
@@ -132,27 +204,9 @@ const OrderHistoryPage = () => {
                         });
                         setOrderStatusHistories(historiesMap);
                         
-                        // Load all feedbacks for each order
-                        const feedbackPromises = orderHistory.map(async (order) => {
-                            try {
-                                const feedbacks = await getFeedbacksByCustomerAndOrder(customerData.customerId, order.orderId);
-                                return { orderId: order.orderId, feedbacks };
-                            } catch (error) {
-                                console.error(`Error loading feedbacks for order ${order.orderId}:`, error);
-                                return { orderId: order.orderId, feedbacks: [] };
-                            }
-                        });
-                        
-                        const allFeedbacks = await Promise.all(feedbackPromises);
+                  
                         const feedbacksMap = {};
-                        allFeedbacks.forEach(({ orderId, feedbacks }) => {
-                            // Create a map with key as orderId_productId
-                            console.log(`Feedbacks for order ${orderId}:`, feedbacks);
-                            feedbacks.forEach(feedback => {
-                                const key = `${orderId}_${feedback.productId}`;
-                                feedbacksMap[key] = feedback;
-                            });
-                        });
+                        
                         console.log('All customer feedbacks map:', feedbacksMap);
                         setCustomerFeedbacks(feedbacksMap);
                     }
@@ -243,41 +297,15 @@ const OrderHistoryPage = () => {
 
     const handleSubmitFeedback = async (values) => {
         try {
-            if (!selectedProduct || !customerInfo?.customerId) {
-                message.error('Không tìm thấy thông tin cần thiết');
-                return;
-            }
-
-            const feedbackData = {
-                customerId: customerInfo.customerId,
-                productId: selectedProduct.productId,
-                orderId: selectedProduct.orderId,
-                rating: values.rating,
-                comment: values.comment || ''
-            };
-
-            await createProductFeedback(feedbackData);
-            message.success('Gửi đánh giá thành công!');
-            
-            // Update customerFeedbacks state to reflect the new feedback
-            const feedbackKey = `${selectedProduct.orderId}_${selectedProduct.productId}`;
-            setCustomerFeedbacks(prev => ({
-                ...prev,
-                [feedbackKey]: {
-                    customerId: customerInfo.customerId,
-                    productId: selectedProduct.productId,
-                    orderId: selectedProduct.orderId,
-                    rating: values.rating,
-                    comment: values.comment || ''
-                }
-            }));
+            // Product feedback feature has been removed for simplicity
+            message.info('Tính năng đánh giá sản phẩm đã được gỡ bỏ để tinh gọn ứng dụng');
             
             // Reset form and close modal
             feedbackForm.resetFields();
             setFeedbackModalVisible(false);
             setSelectedProduct(null);
         } catch (error) {
-            console.error('Error submitting feedback:', error);
+            console.error('Error:', error);
             message.error('Có lỗi xảy ra khi gửi đánh giá');
         }
     };
@@ -318,6 +346,7 @@ const OrderHistoryPage = () => {
                                         onFeedback={handleFeedback}
                                         statusHistories={orderStatusHistories[order.orderId]}
                                         customerFeedbacks={customerFeedbacks}
+                                        productDetails={productDetails}
                                         formatDate={formatDate}
                                         loading={loading}
                                     />

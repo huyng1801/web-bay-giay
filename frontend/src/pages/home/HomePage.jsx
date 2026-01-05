@@ -378,10 +378,6 @@ const HomePage = () => {
                         </Row>
                 </div>
 
-                {/* Testimonials Section */}
-                <TestimonialsSection />
-
-
             
    
         </CustomerLayout>

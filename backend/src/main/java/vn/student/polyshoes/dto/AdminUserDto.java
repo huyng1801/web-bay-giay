@@ -17,36 +17,32 @@ import vn.student.polyshoes.enums.Role;
 public class AdminUserDto {
     
     // Họ và tên của quản trị viên
-    @NotBlank(message = "Full name is required")
-    @Size(min = 2, max = 50, message = "Full name must have between 2 and 50 characters")
+    @NotBlank(message = "Vui lòng nhập họ tên")
+    @Size(min = 2, max = 50, message = "Họ tên phải từ 2 đến 50 ký tự")
     private String fullName;
 
     // Email của quản trị viên (phải là định dạng email hợp lệ)
-    @NotBlank(message = "Email is required")
-    @Email(message = "Please provide a valid email address")
-    @Size(max = 256, message = "Email must not exceed 256 characters")
+    @NotBlank(message = "Vui lòng nhập email")
+    @Email(message = "Email không hợp lệ")
+    @Size(max = 256, message = "Email không vượt quá 256 ký tự")
     private String email;
 
     // Mật khẩu của quản trị viên (từ 8-16 ký tự)
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, max = 16, message = "Password must be at least 8 characters long and not exceed 128 characters")
+    @NotBlank(message = "Vui lòng nhập mật khẩu")
+    @Size(min = 8, max = 16, message = "Mật khẩu phải từ 8 đến 16 ký tự")
     private String password;
 
     // Số điện thoại của quản trị viên (10-15 ký tự)
-    @NotBlank(message = "Phone number is required")
-    @Size(min = 10, max = 15, message = "Phone number must be between 10 and 15 characters")
+    @NotBlank(message = "Vui lòng nhập số điện thoại")
+    @Size(min = 10, max = 15, message = "Số điện thoại phải từ 10 đến 15 ký tự")
     private String phone;
 
-    // Địa chỉ chính của quản trị viên
-    @Size(max = 500, message = "Address must not exceed 500 characters")
+    // Địa chỉ của quản trị viên
+    @Size(max = 500, message = "Địa chỉ không vượt quá 500 ký tự")
     private String address;
 
-    // Địa chỉ thứ hai (tùy chọn)
-    @Size(max = 500, message = "Address2 must not exceed 500 characters")
-    private String address2;
-
     // Vai trò của quản trị viên (ADMIN, STAFF, ...)
-    @NotNull(message = "Role is required")
+    @NotNull(message = "Vui lòng chọn vai trò")
     private Role role;
 
     // Trạng thái hoạt động của tài khoản (mặc định: true)

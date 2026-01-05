@@ -37,14 +37,14 @@ public class VNPAYConfig {
 
 
     // Tạo chuỗi hash cho dữ liệu gửi VNPAY
-    public static String hashAllFields(Map fields) {
-        List fieldNames = new ArrayList(fields.keySet());
+    public static String hashAllFields(Map<String, String> fields) {
+        List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
         StringBuilder sb = new StringBuilder();
-        Iterator itr = fieldNames.iterator();
+        Iterator<String> itr = fieldNames.iterator();
         while (itr.hasNext()) {
-            String fieldName = (String) itr.next();
-            String fieldValue = (String) fields.get(fieldName);
+            String fieldName = itr.next();
+            String fieldValue = fields.get(fieldName);
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
                 sb.append(fieldName);
                 sb.append("=");
@@ -61,7 +61,7 @@ public class VNPAYConfig {
     public static String hmacSHA512(final String key, final String data) {
         try {
             if (key == null || data == null) {
-                throw new NullPointerException();
+                throw new NullPointerException("Khóa hoặc dữ liệu không được để trống!");
             }
             final Mac hmac512 = Mac.getInstance("HmacSHA512");
             byte[] hmacKeyBytes = key.getBytes();
@@ -75,6 +75,8 @@ public class VNPAYConfig {
             }
             return sb.toString();
         } catch (Exception ex) {
+            // Trả về chuỗi rỗng và có thể log ra thông báo tiếng Việt nếu cần
+            // System.err.println("Lỗi mã hóa HMAC SHA512: " + ex.getMessage());
             return "";
         }
     }
@@ -88,7 +90,7 @@ public class VNPAYConfig {
                 ipAdress = request.getLocalAddr();
             }
         } catch (Exception e) {
-            ipAdress = "Invalid IP:" + e.getMessage();
+            ipAdress = "IP không hợp lệ: " + e.getMessage();
         }
         return ipAdress;
     }

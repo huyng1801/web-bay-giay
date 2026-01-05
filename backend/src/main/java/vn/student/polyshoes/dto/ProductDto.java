@@ -15,28 +15,28 @@ import lombok.NoArgsConstructor;
 public class ProductDto {
 
     // Tên của sản phẩm
-    @NotBlank(message = "Product name cannot be blank")
+        @NotBlank(message = "Tên sản phẩm không được để trống")
     private String productName;
 
     // Mô tả chi tiết của sản phẩm (tùy chọn)
     private String description; // Optional field
 
     // Giá bán đơn vị
-    @NotNull(message = "Selling price cannot be null")
-    @Min(value = 0, message = "Selling price must be at least 0")
+        @NotNull(message = "Giá bán không được để trống")
+        @Min(value = 0, message = "Giá bán phải lớn hơn hoặc bằng 0")
     private Long sellingPrice;
 
     // Phần trăm chính giữ (mặc định: 0)
-    @NotNull(message = "Discount percentage cannot be null")
-    @Min(value = 0, message = "Discount percentage must be at least 0")
+        @NotNull(message = "Phần trăm giảm giá không được để trống")
+        @Min(value = 0, message = "Phần trăm giảm giá phải lớn hơn hoặc bằng 0")
     private Integer discountPercentage = 0;
 
     // ID của thương hiệu
-    @NotNull(message = "Brand ID cannot be null")
+        @NotNull(message = "ID thương hiệu không được để trống")
     private int brandId;
 
     // ID của danh mục con
-    @NotNull(message = "Unit price cannot be null")
+        @NotNull(message = "ID danh mục con không được để trống")
     private int subCategoryId;
 
     // Trạng thái hoạt động (mặc định: true)

@@ -18,57 +18,57 @@ public class VoucherDto {
     private Long voucherId;
 
     // Mã code của voucher (bắt buộc, không được để trống)
-    @NotBlank(message = "Voucher code must not be blank")
+    @NotBlank(message = "Mã voucher không được để trống")
     private String code;
 
     // Tên voucher (bắt buộc)
-    @NotBlank(message = "Voucher name must not be blank")
+    @NotBlank(message = "Tên voucher không được để trống")
     private String name;
 
     // Mô tả chi tiết voucher (tùy chọn)
     private String description;
 
     // Loại giảm giá (theo phần trăm hoặc số tiền cố định)
-    @NotNull(message = "Discount type must not be null")
+    @NotNull(message = "Loại giảm giá không được để trống")
     private Voucher.DiscountType discountType;
 
     // Giá trị giảm giá (bắt buộc, > 0)
-    @NotNull(message = "Discount value must not be null")
-    @Positive(message = "Discount value must be greater than 0")
+    @NotNull(message = "Giá trị giảm giá không được để trống")
+    @Positive(message = "Giá trị giảm giá phải lớn hơn 0")
     private Double discountValue;
 
     // Số tiền giảm tối đa (nếu có, >= 0)
-    @PositiveOrZero(message = "Max discount must be zero or positive")
+    @PositiveOrZero(message = "Giảm giá tối đa phải lớn hơn hoặc bằng 0")
     private Double maxDiscount;
 
     // Giá trị đơn hàng tối thiểu để áp dụng voucher (>= 0)
-    @PositiveOrZero(message = "Minimum order value must be zero or positive")
+    @PositiveOrZero(message = "Giá trị đơn hàng tối thiểu phải lớn hơn hoặc bằng 0")
     private Double minOrderValue;
 
     // Loại điều kiện áp dụng voucher (VD: theo giá trị đơn hàng, số lượng sản phẩm...)
-    @NotNull(message = "Condition type must not be null")
+    @NotNull(message = "Loại điều kiện không được để trống")
     private Voucher.ConditionType conditionType;
 
     // Giá trị điều kiện áp dụng (>= 0)
-    @PositiveOrZero(message = "Condition value must be zero or positive")
+    @PositiveOrZero(message = "Giá trị điều kiện phải lớn hơn hoặc bằng 0")
     private Double conditionValue;
 
     // Ngày bắt đầu hiệu lực của voucher
-    @NotNull(message = "Start date must not be null")
+    @NotNull(message = "Ngày bắt đầu không được để trống")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate startDate;
 
     // Ngày kết thúc hiệu lực của voucher
-    @NotNull(message = "End date must not be null")
+    @NotNull(message = "Ngày kết thúc không được để trống")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate endDate;
 
     // Số lượt sử dụng tối đa (>= 0, null = không giới hạn)
-    @PositiveOrZero(message = "Usage limit must be zero or positive")
+    @PositiveOrZero(message = "Số lượt sử dụng tối đa phải lớn hơn hoặc bằng 0")
     private Integer usageLimit;
 
     // Số lượt đã sử dụng (>= 0)
-    @PositiveOrZero(message = "Used count must be zero or positive")
+    @PositiveOrZero(message = "Số lượt đã sử dụng phải lớn hơn hoặc bằng 0")
     private Integer usedCount;
 
     // Hàm khởi tạo từ entity Voucher

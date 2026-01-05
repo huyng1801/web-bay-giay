@@ -327,25 +327,12 @@ const AdminLayout = ({ children }) => {
         : []
       ),
 
+
       //--- VOUCHER ---
       {
         key: '14',
         icon: <GiftOutlined />,
         label: <Link to="/admin/voucher">Voucher</Link>
-      },
-
-      //--- FEEDBACK ---
-      {
-        key: '15',
-        icon: <StarOutlined />,
-        label: <Link to="/admin/feedback">Phản hồi / Đánh giá</Link>
-      },
-
-      //--- VẬN CHUYỂN ---
-      {
-        key: '16',
-        icon: <TruckOutlined />,
-        label: <Link to="/admin/shipping">Vận chuyển</Link>
       },
 
      

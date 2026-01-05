@@ -30,6 +30,9 @@ public class HomeService {
 
     // Lấy danh sách voucher khả dụng cho customer
     public List<Voucher> getAvailableVouchersForCustomer(Integer customerId, Double orderValue) {
+        if (customerId == null) {
+            throw new IllegalArgumentException("Customer ID cannot be null");
+        }
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
                 
@@ -85,6 +88,9 @@ public class HomeService {
         }
 
         Voucher voucher = voucherOpt.get();
+        if (customerId == null) {
+            throw new IllegalArgumentException("Customer ID cannot be null");
+        }
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 

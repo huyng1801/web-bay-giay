@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Table, InputNumber, Button, message, Tag, Typography, Row, Col, Card, Statistic } from 'antd';
 import { SaveOutlined, ReloadOutlined, WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import ProductSizeService from '../../services/admin/ProductSizeService';
-import ProductColorService from '../../services/admin/ProductColorService';
+import ProductDetailsService from '../../services/admin/ProductDetailsService';
 
 const { Text } = Typography;
 
@@ -31,36 +30,25 @@ const ProductStockModal = ({ visible, product, onCancel, onSuccess }) => {
   const loadStockData = async (productId) => {
     setLoading(true);
     try {
-      // Load product colors
-      const colorsData = await ProductColorService.getColorsByProductId(productId);
+      // Load product details for this product
+      const productDetails = await ProductDetailsService.getDetailsByProductId(productId);
 
-      // Load stock data for each color
-      const allStockData = [];
-      
-      for (const color of colorsData) {
-        try {
-          const sizesData = await ProductSizeService.findByProductColorId(color.productColorId);
-          sizesData.forEach(size => {
-            allStockData.push({
-              key: `${color.productColorId}-${size.productSizeId}`,
-              productColorId: color.productColorId,
-              productSizeId: size.productSizeId,
-              colorName: color.colorName,
-              sizeValue: size.sizeValue,
-              stockQuantity: size.stockQuantity || 0,
-              originalStock: size.stockQuantity || 0,
-              isActive: size.isActive
-            });
-          });
-        } catch (error) {
-          console.error(`Error loading sizes for color ${color.productColorId}:`, error);
-        }
-      }
+      // Transform product details to stock data format
+      const allStockData = (productDetails || []).map(detail => ({
+        key: `${detail.productDetailId}`,
+        productDetailId: detail.productDetailId,
+        colorName: detail.colorName || detail.color?.colorName || detail.color?.tenMau || 'N/A',
+        sizeValue: detail.sizeValue || detail.size?.sizeValue || detail.size?.giaTri || 'N/A',
+        stockQuantity: detail.stockQuantity || 0,
+        originalStock: detail.stockQuantity || 0,
+        isActive: detail.isActive
+      }));
 
       setStockData(allStockData);
     } catch (error) {
       message.error("Lỗi khi tải dữ liệu tồn kho");
       console.error('Error loading stock data:', error);
+      setStockData([]);
     } finally {
       setLoading(false);
     }
@@ -90,7 +78,7 @@ const ProductStockModal = ({ visible, product, onCancel, onSuccess }) => {
 
       // Update each changed stock item
       for (const item of updates) {
-        await ProductSizeService.updateStock(item.productSizeId, item.stockQuantity);
+        await ProductDetailsService.updateStock(item.productDetailId, item.stockQuantity);
       }
 
       message.success(`Đã cập nhật ${updates.length} mục tồn kho thành công!`);

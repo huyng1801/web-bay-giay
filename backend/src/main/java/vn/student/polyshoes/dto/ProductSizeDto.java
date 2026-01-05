@@ -15,17 +15,17 @@ import lombok.NoArgsConstructor;
 public class ProductSizeDto {
 
     // Giá trị kích cở (VD: 36, 37, 38, ...)
-    @NotBlank(message = "Size value is required")
-    @Size(max = 30, message = "Size value must not exceed 30 characters")
+        @NotBlank(message = "Giá trị kích cỡ là bắt buộc")
+        @Size(max = 30, message = "Giá trị kích cỡ không vượt quá 30 ký tự")
     private String sizeValue;
 
     // Số lượng tồn kho của kích cở này
-    @NotNull(message = "Stock quantity is required")
-    @Min(value = 0, message = "Stock quantity must be greater than or equal to 0")
+        @NotNull(message = "Số lượng tồn kho là bắt buộc")
+        @Min(value = 0, message = "Số lượng tồn kho phải lớn hơn hoặc bằng 0")
     private Integer stockQuantity;
 
     // ID của màu sản phẩm liên kết
-    @NotNull(message = "Product color ID is required")
+        @NotNull(message = "ID màu sản phẩm là bắt buộc")
     private Integer productColorId; // Associated product color ID
 
     // Trạng thái hoạt động (mặc định: true)

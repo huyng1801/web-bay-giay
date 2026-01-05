@@ -1,98 +1,144 @@
 package vn.student.polyshoes.model;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import vn.student.polyshoes.enums.CustomerType;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Set;
+import java.util.List;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Entity class đại diện cho Khách hàng đăng ký
+ * Entity class đại diện cho Khách hàng (gộp cả khách đăng ký và khách vãng lai)
  * Chứa thông tin xác thực và chi tiết cá nhân của khách hàng
  * Implements UserDetails để sử dụng với Spring Security
  */
 @Entity
-@Table(name = "customer")
+@Table(name = "khach_hang")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Customer implements UserDetails{
+public class Customer implements UserDetails {
 
     // ID duy nhất của khách hàng, tự động tăng
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "customer_id")
+    @Column(name = "ma_khach_hang")
     private Integer customerId;
     
     // Họ và tên đầy đủ của khách hàng
-    @Column(name = "full_name", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
+    @Column(name = "ho_ten", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
     private String fullName;
 
-    // Email đăng nhập, phải duy nhất
-    @Column(name = "email", nullable = false, length = 200, columnDefinition = "NVARCHAR(255)")
+    // Email (có thể trùng đối với khách vãng lai)
+    @Column(name = "email", length = 200, columnDefinition = "NVARCHAR(255)")
     private String email;
 
-    // Mật khẩu đã được mã hóa (hash)
-    @Column(name = "hash_password", nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
-    private String hashPassword;
-
-    // Trạng thái xác thực email (true = đã xác thực, false = chưa xác thực)
-    @Column(name = "email_confirmed", nullable = false)
-    private Boolean emailConfirmed;
-
-    // Số điện thoại liên lạc
-    @Column(name = "phone", nullable = false, length = 15, columnDefinition = "NVARCHAR(15)")
+    // Số điện thoại (có thể trùng đối với khách vãng lai)
+    @Column(name = "so_dien_thoai", length = 15, columnDefinition = "NVARCHAR(15)")
     private String phone;
 
-    // Địa chỉ chính
-    @Column(name = "address", nullable = false, length = 255, columnDefinition = "NVARCHAR(255)")
-    private String address;
+    // Mật khẩu đã được mã hóa (null cho khách vãng lai)
+    @Column(name = "mat_khau_ma_hoa", length = 255, columnDefinition = "NVARCHAR(255)")
+    private String hashPassword;
 
-    // Địa chỉ thứ hai (nếu có)
-    @Column(name = "address2", length = 255, columnDefinition = "NVARCHAR(255)")
-    private String address2;
+    // Loại khách hàng: REGISTERED hoặc GUEST
+    @Enumerated(EnumType.STRING)
+    @Column(name = "loai_khach_hang", nullable = false)
+    private CustomerType customerType;
 
-    // Thành phố/Tỉnh
-    @Column(name = "city", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
-    private String city;
+    // Trạng thái xác thực email (chỉ áp dụng cho khách đăng ký)
+    @Column(name = "xac_thuc_email")
+    private Boolean emailConfirmed = false;
+
+    // Ngày sinh
+    @Column(name = "ngay_sinh")
+    @Temporal(TemporalType.DATE)
+    private Date dateOfBirth;
+
+    // Giới tính
+    @Column(name = "gioi_tinh", length = 10, columnDefinition = "NVARCHAR(10)")
+    private String gender;
     
     // Trạng thái kích hoạt tài khoản
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "trang_thai_kich_hoat", nullable = false)
     private Boolean isActive = true;
     
     // Thời gian tạo tài khoản
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "thoi_gian_tao", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
 
     // Thời gian cập nhật lần cuối
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "thoi_gian_cap_nhat", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
+    
+    // Danh sách địa chỉ của khách hàng
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<CustomerAddress> addresses;
 
     // Danh sách các đơn hàng của khách hàng
     @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<Order> orders;
+    @JsonIgnore
+    private List<Order> orders;
 
-        @Override
+    // Constructor cho khách đăng ký
+    public Customer(String fullName, String email, String phone, String hashPassword) {
+        this();
+        this.fullName = fullName;
+        this.email = email;
+        this.phone = phone;
+        this.hashPassword = hashPassword;
+        this.customerType = CustomerType.REGISTERED;
+        this.emailConfirmed = false;
+    }
+
+    // Constructor cho khách vãng lai
+    public Customer(String fullName, String email, String phone) {
+        this();
+        this.fullName = fullName;
+        this.email = email;
+        this.phone = phone;
+        this.hashPassword = null; // Khách vãng lai không có mật khẩu
+        this.customerType = CustomerType.GUEST;
+        this.emailConfirmed = null; // Không áp dụng cho khách vãng lai
+    }
+
+    // Utility methods
+    public boolean isRegistered() {
+        return customerType == CustomerType.REGISTERED;
+    }
+
+    public boolean isGuest() {
+        return customerType == CustomerType.GUEST;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        Date now = new Date();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = new Date();
+    }
+
+    // Spring Security UserDetails implementation
+    @Override
     public String getUsername() {
         return email;
     }
@@ -119,12 +165,12 @@ public class Customer implements UserDetails{
 
     @Override
     public boolean isEnabled() {
-        return isActive != null ? isActive : true;
+        // Chỉ khách đăng ký mới có thể đăng nhập
+        return isActive != null && isActive && isRegistered() && hashPassword != null;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority("CUSTOMER"));
     }
-    
 }

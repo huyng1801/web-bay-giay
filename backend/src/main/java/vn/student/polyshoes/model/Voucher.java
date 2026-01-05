@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 @Entity
-@Table(name = "vouchers")
+@Table(name = "phieu_giam_gia")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,61 +16,61 @@ public class Voucher {
     // ID duy nhất của voucher, tự động tăng
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "voucher_id")
+    @Column(name = "ma_voucher")
     private Long voucherId;
 
     // Mã code duy nhất của voucher
-    @Column(name = "code", unique = true, nullable = false, length = 50)
+    @Column(name = "ma_code", unique = true, nullable = false, length = 50)
     private String code;
 
     // Tên/Tiêu đề của voucher
-    @Column(name = "name", nullable = false, length = 100, columnDefinition = "NVARCHAR(128)")
+    @Column(name = "ten_voucher", nullable = false, length = 100, columnDefinition = "NVARCHAR(128)")
     private String name;
 
     // Mô tả chi tiết về voucher
-    @Column(name = "description", length = 500, columnDefinition = "NVARCHAR(500)")
+    @Column(name = "mo_ta", length = 500, columnDefinition = "NVARCHAR(500)")
     private String description;
 
     // Loại giảm giá (PERCENTAGE = %, FIXED = số tiền cố định)
     @Enumerated(EnumType.STRING)
-    @Column(name = "discount_type", nullable = false)
+    @Column(name = "loai_giam_gia", nullable = false)
     private DiscountType discountType;
 
     // Giá trị giảm giá (% hoặc số tiền)
-    @Column(name = "discount_value", nullable = false)
+    @Column(name = "gia_tri_giam_gia", nullable = false)
     private Double discountValue;
 
     // Giới hạn giảm giá tối đa (nếu có)
-    @Column(name = "max_discount")
+    @Column(name = "giam_gia_toi_da")
     private Double maxDiscount;
 
     // Giá trị đơn hàng tối thiểu để áp dụng voucher
-    @Column(name = "min_order_value")
+    @Column(name = "gia_tri_don_hang_toi_thieu")
     private Double minOrderValue;
 
     // Loại điều kiện áp dụng voucher
     @Enumerated(EnumType.STRING)
-    @Column(name = "condition_type", nullable = false)
+    @Column(name = "loai_dieu_kien", nullable = false)
     private ConditionType conditionType;
 
     // Giá trị của điều kiện (nếu có)
-    @Column(name = "condition_value")
+    @Column(name = "gia_tri_dieu_kien")
     private Double conditionValue;
 
     // Ngày bắt đầu hiệu lực voucher
-    @Column(name = "start_date", nullable = false)
+    @Column(name = "ngay_bat_dau", nullable = false)
     private LocalDate startDate;
 
     // Ngày kết thúc hiệu lực voucher
-    @Column(name = "end_date", nullable = false)
+    @Column(name = "ngay_ket_thuc", nullable = false)
     private LocalDate endDate;
 
     // Giới hạn số lần sử dụng tổng cộng
-    @Column(name = "usage_limit", nullable = false)
+    @Column(name = "gioi_han_su_dung", nullable = false)
     private Integer usageLimit;
 
     // Số lần voucher đã được sử dụng
-    @Column(name = "used_count", nullable = false)
+    @Column(name = "so_lan_da_su_dung", nullable = false)
     private Integer usedCount = 0;
 
     // Enum định nghĩa loại giảm giá

@@ -71,6 +71,6 @@ public class AuthenticationController {
 
     // Trả về lỗi khi validate dữ liệu
     private ResponseEntity<?> badRequest(BindingResult result) {
-        return ResponseEntity.badRequest().body("Error: " + result.getAllErrors());
+        return ResponseEntity.badRequest().body("Lỗi: " + result.getAllErrors());
     }
 }

@@ -4,8 +4,7 @@ import OrderService from '../../services/admin/OrderService';
 import AdminLayout from '../../layouts/AdminLayout';
 import ProductService from '../../services/admin/ProductService';
 import CustomerService from '../../services/admin/CustomerService';
-import ProductColorService from '../../services/admin/ProductColorService';
-import ProductSizeService from '../../services/admin/ProductSizeService';
+import ProductDetailsService from '../../services/admin/ProductDetailsService';
 import * as VoucherService from '../../services/admin/VoucherService';
 import { calculateDiscountedPrice } from '../../utils/priceUtils';
 
@@ -37,9 +36,7 @@ const AdminSalePage = () => {
   const [customerListVisible, setCustomerListVisible] = useState(false);
   const [allCustomers, setAllCustomers] = useState([]);
   
-  // Staff assignment (for online orders)
-  const [selectedStaff, setSelectedStaff] = useState(null);
-  const [allStaff, setAllStaff] = useState([]);
+  // Current user
   const [currentUser, setCurrentUser] = useState(null);
   
   // Modal states
@@ -49,10 +46,8 @@ const AdminSalePage = () => {
   
   // Product selection states
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [productColors, setProductColors] = useState([]);
-  const [productSizes, setProductSizes] = useState([]);
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(null);
+  const [productDetails, setProductDetails] = useState([]);
+  const [selectedDetail, setSelectedDetail] = useState(null);
   
   // Form instances
   const [checkoutForm] = Form.useForm();
@@ -60,6 +55,12 @@ const AdminSalePage = () => {
   
   // Payment method
   const [paymentMethod, setPaymentMethod] = useState('IN_STORE');
+  
+  // Pending order states for in-store sales
+  const [pendingOrderId, setPendingOrderId] = useState(null);
+  const [reservedItems, setReservedItems] = useState(new Map()); // Track reserved stock
+  const [holdTimeout, setHoldTimeout] = useState(null);
+  const [isHoldingStock, setIsHoldingStock] = useState(false);
 
   // Inline styles
   const styles = {
@@ -88,6 +89,14 @@ const AdminSalePage = () => {
     fetchProducts();
     fetchAllCustomers();
     fetchCurrentUser();
+    
+    // Cleanup function to release pending order when component unmounts
+    return () => {
+      if (pendingOrderId && holdTimeout) {
+        releasePendingOrder('Thoát khỏi trang bán hàng');
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load vouchers when cart or customer changes
@@ -188,6 +197,116 @@ const AdminSalePage = () => {
     }
   };
 
+  // ======= PENDING ORDER SYSTEM FOR IN-STORE SALES =======
+  
+  // Create or update pending order for in-store sales with PRIORITY reservation
+  const createOrUpdatePendingOrder = async () => {
+    try {
+      if (!currentUser) {
+        console.warn('No current user found, creating temporary order');
+        const tempId = 'temp-counter-' + Date.now();
+        setPendingOrderId(tempId);
+        setIsHoldingStock(true);
+        
+        const timeout = setTimeout(() => {
+          releasePendingOrder('⏰ Hết thời gian giữ hàng ưu tiên (10 phút)');
+          message.warning('Đã hết thời gian giữ hàng! Vui lòng thanh toán lại.', 5);
+        }, 10 * 60 * 1000);
+        setHoldTimeout(timeout);
+        
+        return { pendingOrderId: tempId };
+      }
+      
+      // Try API first, fallback to temporary solution if not available
+      if (!OrderService.createPendingOrder) {
+        console.warn('OrderService.createPendingOrder not available, using in-memory tracking');
+        const tempId = 'priority-counter-' + currentUser.userId + '-' + Date.now();
+        setPendingOrderId(tempId);
+        setIsHoldingStock(true);
+        
+        // Set 10-minute timer with priority message
+        const timeout = setTimeout(() => {
+          releasePendingOrder('⏰ Hết thời gian ưu tiên bán tại quầy (10 phút)');
+          message.warning('Thời gian ưu tiên đã hết! Khách online có thể đặt lại.', 5);
+        }, 10 * 60 * 1000);
+        setHoldTimeout(timeout);
+        
+        return { pendingOrderId: tempId };
+      }
+      
+      const pendingOrderData = {
+        staffId: currentUser.userId,
+        tableNumber: 'COUNTER',
+        staffNote: `🏪 BÁN TẠI QUẦY - Ưu tiên giữ hàng cho NV: ${currentUser.fullName}`,
+        status: 'PENDING_PAYMENT',
+        priority: 'IN_STORE_HIGH'
+      };
+      
+      let pendingOrder;
+      if (pendingOrderId) {
+        // Update existing pending order
+        pendingOrder = await OrderService.updatePendingOrder(pendingOrderId, pendingOrderData);
+      } else {
+        // Create new pending order
+        pendingOrder = await OrderService.createPendingOrder(pendingOrderData);
+        setPendingOrderId(pendingOrder.pendingOrderId);
+        setIsHoldingStock(true);
+        
+        // Set timeout for auto-release (10 minutes)
+        const timeout = setTimeout(() => {
+          releasePendingOrder('⏰ Hết thời gian ưu tiên giữ hàng tại quầy (10 phút)');
+          message.warning('🚨 Thời gian ưu tiên đã hết! Khách online có thể đặt hàng.', 5);
+        }, 10 * 60 * 1000);
+        setHoldTimeout(timeout);
+      }
+      
+      return pendingOrder;
+    } catch (error) {
+      console.error('Error creating pending order:', error);
+      // Don't show error to user, just log and continue
+      return null;
+    }
+  };
+  
+  // Release pending order and stock
+  const releasePendingOrder = async (reason = 'Hủy giữ hàng') => {
+    if (!pendingOrderId) return;
+    
+    try {
+      // Only call API if it exists
+      if (OrderService.cancelPendingOrder) {
+        await OrderService.cancelPendingOrder(pendingOrderId, reason);
+      }
+      
+      // Clear states
+      setPendingOrderId(null);
+      setIsHoldingStock(false);
+      setReservedItems(new Map());
+      
+      if (holdTimeout) {
+        clearTimeout(holdTimeout);
+        setHoldTimeout(null);
+      }
+      
+      console.log('Released pending order:', reason);
+      if (reason.includes('⏰') || reason.includes('Hết thời gian')) {
+        // Show notification when priority time expires
+        message.info('🔄 Hàng đã được trả lại cho khách online có thể đặt', 3);
+      }
+    } catch (error) {
+      console.error('Error releasing pending order:', error);
+      // Still clear states even if API call fails
+      setPendingOrderId(null);
+      setIsHoldingStock(false);
+      setReservedItems(new Map());
+      
+      if (holdTimeout) {
+        clearTimeout(holdTimeout);
+        setHoldTimeout(null);
+      }
+    }
+  };
+
   // Search products
   const handleSearch = (value) => {
     setSearch(value);
@@ -197,80 +316,152 @@ const AdminSalePage = () => {
   // Show product selection modal
   const showProductSelection = async (product) => {
     setSelectedProduct(product);
-    setSelectedColor(null);
-    setSelectedSize(null);
-    setProductSizes([]);
+    setSelectedDetail(null);
     
     try {
-      const colors = await ProductColorService.getColorsByProductId(product.productId);
-      setProductColors(colors);
+      const details = await ProductDetailsService.getAvailableProductDetailsByProductId(product.productId);
+      setProductDetails(details || []);
       setProductSelectionVisible(true);
     } catch (error) {
-      message.error('Không thể tải màu sắc sản phẩm!');
+      message.error('Không thể tải chi tiết sản phẩm!');
+      console.error('Error loading product details:', error);
     }
   };
 
-  // Handle color selection
-  const handleColorChange = async (colorId) => {
-    setSelectedColor(colorId);
-    setSelectedSize(null);
-    
+  // Handle product detail selection
+  const handleDetailChange = (detailId) => {
+    setSelectedDetail(detailId);
+  };
+
+  // Check real-time stock availability (prioritize in-store sales)
+  const checkStockAvailability = async (productDetailsId, requestedQuantity = 1) => {
     try {
-      const sizes = await ProductSizeService.findByProductColorId(colorId);
-      setProductSizes(sizes);
+      const productDetail = await ProductDetailsService.getProductDetailsById(productDetailsId);
+      if (!productDetail) return { available: 0, message: 'Sản phẩm không tồn tại!' };
+      
+      const currentStock = productDetail.stockQuantity || 0;
+      const reservedByUs = reservedItems.get(productDetailsId) || 0;
+      const existingCartItem = cart.find(item => item.productDetailsId === productDetailsId);
+      const cartQuantity = existingCartItem ? existingCartItem.quantity : 0;
+      
+      // Available stock = total stock - what's already in our cart + our reservation
+      const availableStock = currentStock - cartQuantity + reservedByUs;
+      
+      console.log('Stock check:', {
+        productDetailsId,
+        currentStock,
+        reservedByUs,
+        cartQuantity,
+        requestedQuantity,
+        availableStock
+      });
+      
+      if (availableStock < requestedQuantity) {
+        return {
+          available: Math.max(0, availableStock),
+          message: `Chỉ còn ${availableStock} sản phẩm khả dụng! (Có thể đã được khách online đặt trước)`
+        };
+      }
+      
+      return { available: availableStock, message: 'OK' };
     } catch (error) {
-      message.error('Không thể tải size sản phẩm!');
-      setProductSizes([]);
+      console.error('Error checking stock:', error);
+      return { available: 0, message: 'Lỗi kiểm tra tồn kho!' };
     }
   };
 
-  // Add product with color and size to cart
+  // Add product detail to cart with smart reservation
   const handleAddToCartWithSelection = async () => {
-    if (!selectedColor || !selectedSize) {
-      message.warning('Vui lòng chọn màu sắc và size!');
+    if (!selectedDetail) {
+      message.warning('Vui lòng chọn màu sắc và kích thước!');
       return;
     }
 
-    const selectedColorObj = productColors.find(c => c.productColorId === selectedColor);
-    const selectedSizeObj = productSizes.find(s => s.productSizeId === selectedSize);
+    const selectedDetailObj = productDetails.find(d => d.productDetailsId === selectedDetail);
     
-    if (!selectedSizeObj || selectedSizeObj.stockQuantity <= 0) {
-      message.error('Sản phẩm này đã hết hàng!');
+    if (!selectedDetailObj) {
+      message.error('Không tìm thấy thông tin sản phẩm!');
+      return;
+    }
+
+    // Real-time stock check with priority for in-store sales
+    const stockCheck = await checkStockAvailability(selectedDetail, 1);
+    if (stockCheck.available < 1) {
+      message.error(`Hết hàng! ${stockCheck.message}`);
       return;
     }
     
-    const cartKey = `${selectedProduct.productId}-${selectedColor}-${selectedSize}`;
+    const cartKey = `${selectedProduct.productId}-${selectedDetail}`;
     const exist = cart.find((item) => item.cartKey === cartKey);
     
     try {
+      // PRIORITY: In-store sales get priority over online orders
+      if (!isHoldingStock) {
+        const pendingOrder = await createOrUpdatePendingOrder();
+        if (pendingOrder) {
+          message.info('🏪 Đang giữ hàng ưu tiên cho bán tại quầy (10 phút)', 3);
+        }
+      }
+      
       if (exist) {
-        if (exist.quantity >= selectedSizeObj.stockQuantity) {
-          message.warning(`Chỉ còn ${selectedSizeObj.stockQuantity} sản phẩm trong kho!`);
+        // Check stock before increasing quantity
+        const stockCheck = await checkStockAvailability(selectedDetail, exist.quantity + 1);
+        if (stockCheck.available < exist.quantity + 1) {
+          message.warning(`Không thể thêm! ${stockCheck.message}`);
           return;
         }
         
-        const newStockQuantity = selectedSizeObj.stockQuantity - 1;
-        await ProductSizeService.updateStock(selectedSize, newStockQuantity);
+        if (exist.quantity >= selectedDetailObj.stockQuantity) {
+          message.warning(`Chỉ còn ${selectedDetailObj.stockQuantity} sản phẩm trong kho!`);
+          return;
+        }
+        
+        // Update pending order item
+        if (pendingOrderId && OrderService.updatePendingOrderItem) {
+          try {
+            await OrderService.updatePendingOrderItem(pendingOrderId, {
+              productDetailsId: selectedDetail,
+              quantity: exist.quantity + 1,
+              unitPrice: calculateDiscountedPrice(
+                selectedProduct.sellingPrice, 
+                selectedProduct.discountPercentage
+              ) || 0
+            });
+          } catch (error) {
+            console.warn('Pending order update failed:', error);
+          }
+        }
         
         setCart((prev) =>
           prev.map((item) =>
             item.cartKey === cartKey
-              ? { ...item, quantity: item.quantity + 1, stockQuantity: newStockQuantity }
+              ? { ...item, quantity: item.quantity + 1 }
               : item
           )
         );
       } else {
-        const newStockQuantity = selectedSizeObj.stockQuantity - 1;
-        await ProductSizeService.updateStock(selectedSize, newStockQuantity);
+        // Add new item to pending order
+        if (pendingOrderId && OrderService.addPendingOrderItem) {
+          try {
+            await OrderService.addPendingOrderItem(pendingOrderId, {
+              productDetailsId: selectedDetail,
+              quantity: 1,
+              unitPrice: calculateDiscountedPrice(
+                selectedProduct.sellingPrice, 
+                selectedProduct.discountPercentage
+              ) || 0
+            });
+          } catch (error) {
+            console.warn('Pending order add item failed:', error);
+          }
+        }
         
         setCart((prev) => [...prev, { 
           ...selectedProduct,
           cartKey,
-          productColorId: selectedColor,
-          productSizeId: selectedSize,
-          colorName: selectedColorObj?.colorName,
-          sizeValue: selectedSizeObj?.sizeValue,
-          stockQuantity: newStockQuantity,
+          productDetailsId: selectedDetail,
+          colorName: selectedDetailObj?.color?.colorName,
+          sizeValue: selectedDetailObj?.size?.sizeValue,
           quantity: 1,
           unitPrice: calculateDiscountedPrice(
             selectedProduct.sellingPrice, 
@@ -279,47 +470,85 @@ const AdminSalePage = () => {
         }]);
       }
       
+      // Update reserved items tracking
+      const reserved = reservedItems.get(selectedDetail) || 0;
+      setReservedItems(prev => new Map(prev.set(selectedDetail, reserved + 1)));
+      
       fetchProducts(search);
       setProductSelectionVisible(false);
+      message.success('Đã thêm sản phẩm vào giỏ hàng!');
       
     } catch (error) {
-      message.error('Lỗi khi cập nhật tồn kho! Vui lòng thử lại.');
+      message.error('Không thể thêm sản phẩm! Có thể đã có khách đặt trước.');
       console.error('Error adding to cart:', error);
     }
   };
 
-  // Update quantity in cart
+  // Update quantity in cart with smart reservation and stock validation
   const updateCartQuantity = async (cartKey, newQuantity) => {
     const currentItem = cart.find(item => item.cartKey === cartKey);
     if (!currentItem) return;
+    
+    if (newQuantity <= 0) {
+      await removeFromCart(cartKey);
+      return;
+    }
+    
+    // Validate stock availability for new quantity
+    const stockCheck = await checkStockAvailability(currentItem.productDetailsId, newQuantity);
+    if (stockCheck.available < newQuantity) {
+      message.error(`Không đủ hàng! ${stockCheck.message}. Tối đa có thể đặt: ${stockCheck.available}`);
+      return;
+    }
     
     const quantityDifference = newQuantity - currentItem.quantity;
     
     try {
       if (quantityDifference !== 0) {
-        const newStockQuantity = currentItem.stockQuantity - quantityDifference;
-        
-        if (newStockQuantity < 0) {
-          message.warning(`Không đủ hàng trong kho! Chỉ còn ${currentItem.stockQuantity + currentItem.quantity} sản phẩm.`);
+        // For in-store sales, we have reserved priority - no need to check again
+        if (newQuantity <= 0) {
+          // Remove item from cart and pending order
+          await removeFromCart(cartKey);
           return;
         }
         
-        await ProductSizeService.updateStock(currentItem.productSizeId, newStockQuantity);
+        // Update pending order if exists
+        if (pendingOrderId && OrderService.updatePendingOrderItem) {
+          try {
+            await OrderService.updatePendingOrderItem(pendingOrderId, {
+              productDetailsId: currentItem.productDetailsId,
+              quantity: newQuantity,
+              unitPrice: currentItem.unitPrice
+            });
+          } catch (error) {
+            console.warn('Pending order item update failed:', error);
+          }
+        }
+        
+        // Update reservation map
+        const reserved = reservedItems.get(currentItem.productDetailsId) || 0;
+        setReservedItems(prev => new Map(prev.set(
+          currentItem.productDetailsId, 
+          Math.max(0, reserved + quantityDifference)
+        )));
         
         setCart((prev) =>
           prev.map((item) => {
             if (item.cartKey === cartKey) {
-              return { ...item, quantity: newQuantity, stockQuantity: newStockQuantity };
+              return { ...item, quantity: newQuantity };
             }
             return item;
           })
         );
         
         fetchProducts(search);
+        message.success('Cập nhật thành công!');
       }
     } catch (error) {
-      message.error('Lỗi khi cập nhật số lượng!');
+      message.error('Không thể cập nhật số lượng! Có thể sản phẩm đã được đặt bởi khách hàng khác.');
       console.error('Error updating quantity:', error);
+      // Refresh to get latest stock
+      fetchProducts(search);
     }
   };
 
@@ -330,18 +559,33 @@ const AdminSalePage = () => {
     
     Modal.confirm({
       title: 'Xác nhận xóa sản phẩm',
-      content: `Bạn có chắc chắn muốn xóa "${itemToRemove.productName}" (${itemToRemove.colorName} - ${itemToRemove.sizeValue}) khỏi giỏ hàng? Tồn kho sẽ được khôi phục ${itemToRemove.quantity} sản phẩm.`,
+      content: `Bạn có chắc chắn muốn xóa "${itemToRemove.productName}" (${itemToRemove.colorName} - ${itemToRemove.sizeValue}) khỏi giỏ hàng? 
+
+📦 Tồn kho sẽ được khôi phục ${itemToRemove.quantity} sản phẩm cho khách online.`,
       okText: 'Xóa',
       cancelText: 'Hủy',
       okType: 'danger',
       onOk: async () => {
         try {
-          const newStockQuantity = itemToRemove.stockQuantity + itemToRemove.quantity;
-          await ProductSizeService.updateStock(itemToRemove.productSizeId, newStockQuantity);
+          // Remove from pending order if exists
+          if (pendingOrderId && OrderService.removePendingOrderItem) {
+            try {
+              await OrderService.removePendingOrderItem(pendingOrderId, itemToRemove.productDetailsId);
+            } catch (error) {
+              console.warn('Pending order item removal failed:', error);
+            }
+          }
+          
+          // Update reservation map
+          setReservedItems(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(itemToRemove.productDetailsId);
+            return newMap;
+          });
           
           setCart((prev) => prev.filter((item) => item.cartKey !== cartKey));
-          
           fetchProducts(search);
+          message.success('Đã xóa sản phẩm khỏi giỏ hàng');
         } catch (error) {
           message.error('Lỗi khi xóa sản phẩm khỏi giỏ hàng!');
           console.error('Error removing from cart:', error);
@@ -399,28 +643,29 @@ const AdminSalePage = () => {
     }
   };
 
-  // Clear cart and restore stock
+  // Clear cart and release pending order
   const clearCart = () => {
     if (cart.length === 0) return;
     
     Modal.confirm({
       title: 'Xác nhận làm trống giỏ hàng',
-      content: `Bạn có chắc chắn muốn làm trống giỏ hàng? Tồn kho sẽ được khôi phục cho ${cart.length} sản phẩm.`,
+      content: `🏪 BÁN TẠI QUẦY - Xác nhận làm trống giỏ hàng?
+
+📦 ${cart.length} sản phẩm sẽ được trả về kho
+🌐 Khách hàng online có thể đặt lại ngay lập tức
+⏱️ Hóa đơn chờ sẽ được hủy`,
       okText: 'Xác nhận',
       cancelText: 'Hủy',
       okType: 'danger',
       onOk: async () => {
         try {
-          let restoredItems = 0;
-          for (const item of cart) {
-            const newStockQuantity = item.stockQuantity + item.quantity;
-            await ProductSizeService.updateStock(item.productSizeId, newStockQuantity);
-            restoredItems++;
-          }
+          // Release pending order first
+          await releasePendingOrder('Làm trống giỏ hàng');
           
           setCart([]);
+          setReservedItems(new Map());
           fetchProducts(search);
-          message.success(`Đã làm trống giỏ hàng và khôi phục tồn kho cho ${restoredItems} sản phẩm!`);
+          message.success(`✅ Đã làm trống giỏ hàng và trả lại ${cart.length} sản phẩm cho khách online!`);
         } catch (error) {
           message.error('Lỗi khi làm trống giỏ hàng!');
           console.error('Error clearing cart:', error);
@@ -577,13 +822,14 @@ const AdminSalePage = () => {
           voucherCode: appliedVoucher?.code || appliedVoucher?.voucherCode || null,
           isPaid: true,
           paymentMethod: paymentMethod,
-          orderNote: paymentMethod === 'IN_STORE' ? 'Bán hàng tại quầy - Tiền mặt' : 'Bán hàng tại quầy - Mã QR',
+          orderNote: `🏪 BÁN TẠI QUẦY (ƯU TIÊN) - ${paymentMethod === 'IN_STORE' ? 'Tiền mặt' : 'Chuyển khoản QR'} - NV: ${currentUser?.fullName || 'Unknown'}`,
           staffId: currentUser?.userId,
           staffName: currentUser?.fullName,
-          skipStockReduction: true
+          priority: 'IN_STORE_PRIORITY',
+          skipStockReduction: false
         },
         orderItemDtos: cart.map((item) => ({
-          productSizeId: item.productSizeId,
+          productDetailsId: item.productDetailsId,
           quantity: item.quantity,
           price: item.unitPrice || 0
         }))
@@ -598,8 +844,14 @@ const AdminSalePage = () => {
         appliedVoucher: appliedVoucher
       });
       
-      await OrderService.createOrder(orderRequestData);
-      message.success('Thanh toán thành công!');
+      const order = await OrderService.createOrder(orderRequestData);
+      
+      // Release pending order after successful payment
+      await releasePendingOrder('✅ Thanh toán thành công');
+      
+      message.success(`🎉 Thanh toán thành công! Mã đơn: ${order?.orderId || 'N/A'}`, 5);
+      
+      // Reset all states
       setCart([]);
       setCustomer(null);
       setPhone('');
@@ -608,6 +860,9 @@ const AdminSalePage = () => {
       setAvailableVouchers([]);
       setPaymentMethod('IN_STORE');
       setCheckoutVisible(false);
+      setReservedItems(new Map());
+      
+      // Refresh product list to show updated stock
       fetchProducts(search);
     } catch (error) {
       message.error('Thanh toán thất bại!');
@@ -674,12 +929,9 @@ const AdminSalePage = () => {
         <ProductSelectionModal
           visible={productSelectionVisible}
           selectedProduct={selectedProduct}
-          productColors={productColors}
-          productSizes={productSizes}
-          selectedColor={selectedColor}
-          selectedSize={selectedSize}
-          onColorChange={handleColorChange}
-          onSizeChange={setSelectedSize}
+          productDetails={productDetails}
+          selectedDetail={selectedDetail}
+          onDetailChange={handleDetailChange}
           onCancel={() => setProductSelectionVisible(false)}
           onOk={handleAddToCartWithSelection}
         />

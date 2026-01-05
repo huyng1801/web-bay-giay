@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input, Tag, message } from 'antd';
 import { GiftOutlined, CheckCircleOutlined, CloseCircleOutlined, PercentageOutlined, DollarOutlined } from '@ant-design/icons';
-import { getAvailableVouchersForCustomer, applyVoucher } from '../../services/home/HomeService';
+import { getAvailableVouchersForCustomer, validateVoucher, applyVoucher } from '../../services/home/HomeService';
 import { formatPrice } from '../../utils/formatters';
 
 const flatsomeStyles = {
@@ -137,6 +137,54 @@ const flatsomeStyles = {
         marginTop: '18px',
         fontSize: '15px',
     },
+};
+
+const voucherCardStyle = {
+  background: '#fff',
+  borderRadius: '16px',
+  boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+  border: '1.5px solid #f2f2f2',
+  padding: '24px 20px',
+  marginBottom: '20px',
+  position: 'relative',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+};
+
+const voucherCodeStyle = {
+  color: '#ff6b35',
+  fontWeight: 800,
+  fontSize: '18px',
+  letterSpacing: '1px',
+  marginBottom: '6px',
+};
+
+const badgeStyle = {
+  position: 'absolute',
+  top: '18px',
+  right: '18px',
+  border: '2px solid #ff6b35',
+  color: '#ff6b35',
+  borderRadius: '999px',
+  padding: '2px 14px',
+  fontWeight: 700,
+  fontSize: '13px',
+  background: '#fff',
+  zIndex: 2,
+};
+
+const voucherDescStyle = {
+  color: '#444',
+  fontSize: '15px',
+  marginBottom: '4px',
+};
+
+const voucherSaveStyle = {
+  color: '#ff6b35',
+  fontWeight: 700,
+  fontSize: '15px',
+  marginTop: '8px',
 };
 
 const VoucherSelector = ({ customerId, orderValue, onVoucherApplied, appliedVoucher }) => {

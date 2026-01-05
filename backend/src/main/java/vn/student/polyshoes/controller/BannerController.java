@@ -5,20 +5,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import jakarta.validation.Valid;
 import vn.student.polyshoes.dto.BannerDto;
 import vn.student.polyshoes.exception.ResourceNotFoundException;
 import vn.student.polyshoes.model.Banner;
+import vn.student.polyshoes.model.AdminUser;
 import vn.student.polyshoes.service.BannerService;
+
+import vn.student.polyshoes.response.ToggleStatusResponse;
 import vn.student.polyshoes.util.ValidationUtils;
 
 import java.util.List;
@@ -52,6 +50,11 @@ public class BannerController {
         if (result.hasErrors()) {
             return badRequest(result);
         }
+        
+        // Get current authenticated admin user
+        String currentAdminId = getCurrentAdminUserId();
+        bannerDto.setCreatedByAdminId(currentAdminId);
+        
         Banner banner = bannerService.createBanner(bannerDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(banner);
     }
@@ -62,6 +65,11 @@ public class BannerController {
         if (result.hasErrors()) {
             return badRequest(result);
         }
+        
+        // Get current authenticated admin user
+        String currentAdminId = getCurrentAdminUserId();
+        bannerDto.setUpdatedByAdminId(currentAdminId);
+        
         Banner banner = bannerService.updateBanner(id, bannerDto);
         if (banner == null) {
             throw new ResourceNotFoundException("Banner với ID " + id + " không tồn tại");
@@ -96,11 +104,21 @@ public class BannerController {
     public ResponseEntity<?> toggleBannerStatus(@PathVariable Integer id) {
         try {
             Banner banner = bannerService.toggleBannerStatus(id);
-            vn.student.polyshoes.response.ToggleStatusResponse response = 
-                new vn.student.polyshoes.response.ToggleStatusResponse(banner.getBannerId(), banner.getIsActive());
+            ToggleStatusResponse response = new ToggleStatusResponse(banner.getBannerId(), banner.getIsActive());
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+    
+    // Helper method to get current authenticated admin user ID
+    private String getCurrentAdminUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof AdminUser) {
+            AdminUser adminUser = (AdminUser) authentication.getPrincipal();
+            return adminUser.getAdminUserId();
+        }
+        // Fallback to default admin ID if no authentication found (for development)
+        return "admin-1";
     }
 }

@@ -22,9 +22,9 @@ public class ProductController {
     @Autowired
     private ProductService productService;
     
-        // Lấy danh sách sản phẩm với các bộ lọc tuỳ chọn: subCategoryId, gender, productName
-        @GetMapping
-        public ResponseEntity<List<ProductResponse>> getAllProducts(
+    // Lấy danh sách sản phẩm với các bộ lọc tuỳ chọn: subCategoryId, gender, productName
+    @GetMapping
+    public ResponseEntity<List<ProductResponse>> getAllProducts(
             @RequestParam(required = false) Integer subCategoryId,
             @RequestParam(required = false) Gender gender,
             @RequestParam(required = false) String productName) {

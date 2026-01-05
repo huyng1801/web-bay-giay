@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 public class ProductColorDto {
 
     // Tên màu sản phẩm
-    @NotBlank(message = "Color name is required")
-    @Size(max = 30, message = "Color name must not exceed 30 characters")
+        @NotBlank(message = "Tên màu là bắt buộc")
+        @Size(max = 30, message = "Tên màu không vượt quá 30 ký tự")
     private String colorName;
 
     // File hình ảnh của màu sản phẩm

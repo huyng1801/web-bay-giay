@@ -7,7 +7,9 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.student.polyshoes.dto.BannerDto;
 import vn.student.polyshoes.exception.FileUploadException;
 import vn.student.polyshoes.model.Banner;
+import vn.student.polyshoes.model.AdminUser;
 import vn.student.polyshoes.repository.BannerRepository;
+import vn.student.polyshoes.repository.AdminUserRepository;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -25,6 +27,9 @@ public class BannerService {
     private static final String BASE_URL = "http://localhost:8080/uploads/";  
     @Autowired
     private BannerRepository bannerRepository;
+
+    @Autowired
+    private AdminUserRepository adminUserRepository;
 
     @Autowired
     private FileService fileService;
@@ -64,11 +69,19 @@ public class BannerService {
             }
         }
 
+        // Get admin user who created this banner
+        AdminUser createdByAdmin = null;
+        if (bannerDto.getCreatedByAdminId() != null) {
+            createdByAdmin = adminUserRepository.findById(bannerDto.getCreatedByAdminId()).orElse(null);
+        }
+
         Banner banner = new Banner();
         banner.setTitle(bannerDto.getTitle());
         banner.setImageUrl(imageUrl);
         banner.setLink(bannerDto.getLink());
         banner.setIsActive(bannerDto.getIsActive());
+        banner.setCreatedBy(createdByAdmin);
+        banner.setUpdatedBy(createdByAdmin); // Initially same as createdBy
         banner.setCreatedAt(new Date());
         banner.setUpdatedAt(new Date());
 
@@ -88,9 +101,16 @@ public class BannerService {
             }
         }
 
+        // Get admin user who updated this banner
+        AdminUser updatedByAdmin = null;
+        if (bannerDto.getUpdatedByAdminId() != null) {
+            updatedByAdmin = adminUserRepository.findById(bannerDto.getUpdatedByAdminId()).orElse(null);
+        }
+
         banner.setTitle(bannerDto.getTitle());
         banner.setLink(bannerDto.getLink());
         banner.setIsActive(bannerDto.getIsActive());
+        banner.setUpdatedBy(updatedByAdmin);
         banner.setUpdatedAt(new Date());
 
         return bannerRepository.save(banner);

@@ -5,45 +5,46 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-
-// DTO dùng để nhận dữ liệu thông tin khách hàng
 @Data
-@NoArgsConstructor
+/**
+ * DTO dùng để nhận dữ liệu thông tin khách hàng
+ * Sử dụng annotation @Data của Lombok để tự động sinh các phương thức getter, setter, toString, equals, và hashCode.
+ */
 @AllArgsConstructor
 public class CustomerDto {
 
     // Họ và tên khách hàng
-    @NotBlank(message = "Full name is mandatory")
-    @Size(max = 50, message = "Full name must not exceed 50 characters")
+        @NotBlank(message = "Họ và tên là bắt buộc")
+        @Size(max = 50, message = "Họ và tên không vượt quá 50 ký tự")
     private String fullName;
 
     // Email của khách hàng
-    @NotBlank(message = "Email is mandatory")
-    @Email(message = "Email should be valid")
-    @Size(max = 255, message = "Email must not exceed 255 characters")
+        @NotBlank(message = "Email là bắt buộc")
+        @Email(message = "Email không hợp lệ")
+        @Size(max = 255, message = "Email không vượt quá 255 ký tự")
     private String email;
 
     // Mật khẩu (có thể tùy chọn)
-    @Size(min = 6, message = "Password must be at least 6 characters long")
+        @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự")
     private String hashPassword;
 
     // Số điện thoại của khách hàng
-    @NotBlank(message = "Phone number is mandatory")
-    @Size(max = 15, message = "Phone number must not exceed 15 characters")
+        @NotBlank(message = "Số điện thoại là bắt buộc")
+        @Size(max = 15, message = "Số điện thoại không vượt quá 15 ký tự")
     private String phone;
 
-    // Địa chỉ chính của khách hàng
-    @NotBlank(message = "Address is mandatory")
-    @Size(max = 255, message = "Address must not exceed 255 characters")
+    // Địa chỉ cụ thể (số nhà, tên đường, ...)
     private String address;
 
-    // Địa chỉ thứ hai (tùy chọn)
-    @Size(max = 255, message = "Address2 must not exceed 255 characters")
-    private String address2;
+    // GHN Province ID
+    private Integer ghnProvinceId;
 
-    // Thành phố/Tỉnh thành của khách hàng
-    @NotBlank(message = "City is mandatory")
-    @Size(max = 50, message = "City must not exceed 50 characters")
-    private String city;
+    // GHN District ID
+    private Integer ghnDistrictId;
+
+    // GHN Ward Code
+    private String ghnWardCode;
 }

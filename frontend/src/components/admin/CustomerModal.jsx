@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Modal, Form, Input, Select } from 'antd';
-import { getProvinceOptions } from '../../utils/provinceUtils';
 
 const CustomerModal = ({
   visible,
@@ -19,11 +18,13 @@ const CustomerModal = ({
     }
   };
 
-  const [provinceOptions, setProvinceOptions] = useState([]);
+  const [provinceOptions, setProvinceOptions] = useState([
+    { value: 'hanoi', label: 'Hà Nội' },
+    { value: 'hcm', label: 'TP. Hồ Chí Minh' },
+    { value: 'danang', label: 'Đà Nẵng' },
+  ]);
 
-  useEffect(() => {
-    setProvinceOptions(getProvinceOptions());
-  }, []);
+  // useEffect no longer needed since we have static options
 
   return (
     <Modal

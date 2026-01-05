@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class UpdateProfileDto {
     
     // Họ và tên khách hàng (2-50 ký tự)
-    @NotBlank(message = "Full name must not be blank")
-    @Size(min = 2, max = 50, message = "Full name must be between 2 and 50 characters")
+    @NotBlank(message = "Họ và tên không được để trống")
+    @Size(min = 2, max = 50, message = "Họ và tên phải từ 2 đến 50 ký tự")
     private String fullName;
 }

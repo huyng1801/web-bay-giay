@@ -27,7 +27,7 @@ import java.util.Date;
  * Implements UserDetails để sử dụng với Spring Security
  */
 @Entity
-@Table(name = "admin_user")
+@Table(name = "quan_tri_vien")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -35,7 +35,7 @@ public class AdminUser implements UserDetails {
 
     // ID duy nhất của admin user, dùng UUID
     @Id
-    @Column(name = "admin_user_id", length = 36)
+    @Column(name = "ma_quan_tri_vien", length = 36)
     private String adminUserId;
 
     // Email đăng nhập, phải duy nhất trong hệ thống
@@ -43,43 +43,40 @@ public class AdminUser implements UserDetails {
     private String email;
 
     // Họ và tên đầy đủ của admin
-    @Column(name = "full_name", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
+    @Column(name = "ho_ten", nullable = false, length = 50, columnDefinition = "NVARCHAR(50)")
     private String fullName;
 
     // Mật khẩu đã được mã hóa (hash)
-    @Column(name = "hash_password", nullable = false, length = 128, columnDefinition = "NVARCHAR(128)")
+    @Column(name = "mat_khau_ma_hoa", nullable = false, length = 128, columnDefinition = "NVARCHAR(128)")
     private String hashPassword;
 
     // Số điện thoại liên lạc
-    @Column(name = "phone", nullable = false, length = 15, columnDefinition = "NVARCHAR(15)")
+    @Column(name = "so_dien_thoai", nullable = false, length = 15, columnDefinition = "NVARCHAR(15)")
     private String phone;
 
-    // Địa chỉ chính
-    @Column(name = "address", length = 500, columnDefinition = "NVARCHAR(500)")
+    // Địa chỉ
+    @Column(name = "dia_chi", length = 500, columnDefinition = "NVARCHAR(500)")
     private String address;
-
-    // Địa chỉ thứ hai (nếu có)
-    @Column(name = "address2", length = 500, columnDefinition = "NVARCHAR(500)")
-    private String address2;
 
     // Quyền hạn (ADMIN, EMPLOYEE, etc.) - Enum type
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(name = "quyen_han", nullable = false)
     private Role role;
 
     // Trạng thái kích hoạt tài khoản (true = đang hoạt động, false = đã khóa)
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "trang_thai_kich_hoat", nullable = false)
     private Boolean isActive = true;
 
     // Thời gian tạo tài khoản
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "thoi_gian_tao", nullable = false)
     private Date createdAt;
 
     // Thời gian cập nhật lần cuối
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "thoi_gian_cap_nhat", nullable = false)
     private Date updatedAt;
+
 
     // Lấy tên đăng nhập (email)
     @Override

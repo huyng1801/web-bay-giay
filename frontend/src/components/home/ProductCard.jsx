@@ -1,5 +1,6 @@
 
 import React from 'react';
+import PlaceholderImageIcon from '../common/PlaceholderImageIcon';
 import { useNavigate } from 'react-router-dom';
 import { Card, Typography, Tag } from 'antd';
 import PriceDisplay from '../common/PriceDisplay';
@@ -117,11 +118,22 @@ const styles = {
 const ProductCard = ({ product }) => {
     const navigate = useNavigate();
     const [isHovered, setIsHovered] = React.useState(false);
-        // const [wishlist, setWishlist] = React.useState(false);
 
     const handleMouseEnter = () => setIsHovered(true);
     const handleMouseLeave = () => setIsHovered(false);
 
+    // Get main product image - prioritize mainImageUrl, then fall back to imageUrl
+    const getProductImage = () => {
+        if (product.mainImageUrl && typeof product.mainImageUrl === 'string' && product.mainImageUrl.trim() !== '') {
+            return product.mainImageUrl;
+        }
+        if (product.imageUrl && typeof product.imageUrl === 'string' && product.imageUrl.trim() !== '') {
+            return product.imageUrl;
+        }
+        return null;
+    };
+
+    const [imgError, setImgError] = React.useState(false);
 
     // Flatsome-style badges
     const renderBadge = () => {
@@ -137,11 +149,15 @@ const ProductCard = ({ product }) => {
         return null;
     };
 
+    // Check if product is in stock (has available colors and sizes)
+    const isInStock = product.isActive !== false;
+
     return (
         <Card
             style={{
                 ...styles.card,
-                ...(isHovered ? styles.cardHover : {})
+                ...(isHovered ? styles.cardHover : {}),
+                ...(product.isActive === false ? { opacity: 0.6 } : {})
             }}
             bodyStyle={{ padding: 0 }}
             onMouseEnter={handleMouseEnter}
@@ -150,41 +166,76 @@ const ProductCard = ({ product }) => {
             cover={
                 <div style={styles.imageContainer}>
                     {renderBadge()}
-                    <img
-                        src={product.imageUrl}
-                        alt={product.productName}
-                        style={{
+                    {!isInStock && (
+                        <span style={{
+                            position: 'absolute',
+                            bottom: 12,
+                            right: 12,
+                            zIndex: 2,
+                            background: 'rgba(0,0,0,0.7)',
+                            color: '#fff',
+                            padding: '4px 12px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }}>
+                            Hết hàng
+                        </span>
+                    )}
+                    {getProductImage() && !imgError ? (
+                        <img
+                            src={getProductImage()}
+                            alt={product.productName}
+                            style={{
+                                ...styles.image,
+                                ...(isHovered ? styles.imageHover : {})
+                            }}
+                            onError={() => setImgError(true)}
+                        />
+                    ) : (
+                        <div style={{
                             ...styles.image,
-                            ...(isHovered ? styles.imageHover : {})
-                        }}
-                    />
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: '#f7f7f7',
+                        }}>
+                            <PlaceholderImageIcon size={48} />
+                        </div>
+                    )}
                 </div>
             }
         >
             <div style={styles.content}>
-           
                 <Title level={5} style={styles.name}>{product.productName}</Title>
+                
+                {/* Brand info if available */}
+                {product.brand && (
+                    <div style={{
+                        fontSize: '12px',
+                        color: '#999',
+                        marginBottom: '6px',
+                        fontWeight: '500'
+                    }}>
+                        {product.brand.brandName || product.brandName}
+                    </div>
+                )}
+                
                 <Tag style={styles.priceTag}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {(() => {
                             const priceInfo = getPriceDisplayInfo(product);
                             return (
-                                <>
-                                    <PriceDisplay
-                                        originalPrice={priceInfo.originalPrice}
-                                        salePrice={priceInfo.finalPrice}
-                                        originalStyle={{ fontSize: '13px' }}
-                                        saleStyle={{ fontSize: '18px', color: '#ff4d4f' }}
-                                    />
-
-                                </>
+                                <PriceDisplay
+                                    originalPrice={priceInfo.originalPrice}
+                                    salePrice={priceInfo.finalPrice}
+                                    originalStyle={{ fontSize: '13px' }}
+                                    saleStyle={{ fontSize: '18px', color: '#ff4d4f' }}
+                                />
                             );
                         })()}
-                       
                     </div>
                 </Tag>
-
-               
             </div>
         </Card>
     );

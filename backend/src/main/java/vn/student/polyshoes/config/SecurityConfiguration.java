@@ -41,7 +41,7 @@ public class SecurityConfiguration {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 // Cho phép truy cập không cần xác thực các đường dẫn sau
-                .requestMatchers("/home/**", "/auth/**", "/api/public/**", "/uploads/**")
+                .requestMatchers("/home/**", "/auth/**", "/uploads/**")
                 .permitAll()
                 // Các request khác yêu cầu xác thực
                 .anyRequest()

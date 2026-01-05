@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import vn.student.polyshoes.dto.VoucherUsageDto;
+import vn.student.polyshoes.enums.CustomerType;
 import vn.student.polyshoes.model.*;
 import vn.student.polyshoes.repository.*;
 
@@ -310,11 +311,11 @@ public class VoucherService {
         }
         
         // Guest info
-        if (order.getGuest() != null) {
-            dto.setGuestId(order.getGuest().getGuestId());
-            dto.setGuestName(order.getGuest().getFullName());
-            dto.setGuestPhone(order.getGuest().getPhone());
-            dto.setGuestEmail(order.getGuest().getEmail());
+        if (order.getCustomer() != null && order.getCustomer().getCustomerType() == CustomerType.GUEST) {
+            dto.setGuestId(order.getCustomer().getCustomerId());
+            dto.setGuestName(order.getCustomer().getFullName());
+            dto.setGuestPhone(order.getCustomer().getPhone());
+            dto.setGuestEmail(order.getCustomer().getEmail());
         }
         
         // Order info
@@ -406,11 +407,11 @@ public class VoucherService {
         }
         
         // Guest info
-        if (order.getGuest() != null) {
-            dto.setGuestId(order.getGuest().getGuestId());
-            dto.setGuestName(order.getGuest().getFullName());
-            dto.setGuestPhone(order.getGuest().getPhone());
-            dto.setGuestEmail(order.getGuest().getEmail());
+        if (order.getCustomer() != null && order.getCustomer().getCustomerType() == CustomerType.GUEST) {
+            dto.setGuestId(order.getCustomer().getCustomerId());
+            dto.setGuestName(order.getCustomer().getFullName());
+            dto.setGuestPhone(order.getCustomer().getPhone());
+            dto.setGuestEmail(order.getCustomer().getEmail());
         }
         
         // Order info

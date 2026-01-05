@@ -98,35 +98,35 @@ public class GlobalExceptionHandler {
     private String determineMessage(Exception exception) {
         // Sai email hoặc mật khẩu
         if (exception instanceof BadCredentialsException) {
-            return "The username or password is incorrect";
+            return "Sai tên đăng nhập hoặc mật khẩu";
         } 
         // Tài khoản bị khóa
         else if (exception instanceof AccountStatusException) {
-            return "The account is locked";
+            return "Tài khoản đã bị khóa";
         } 
         // Không có quyền truy cập
         else if (exception instanceof AccessDeniedException) {
-            return "You are not authorized to access this resource";
+            return "Bạn không có quyền truy cập tài nguyên này";
         } 
         // JWT signature không hợp lệ
         else if (exception instanceof SignatureException) {
-            return "The JWT signature is invalid";
+            return "Chữ ký JWT không hợp lệ";
         } 
         // JWT token hết hạn
         else if (exception instanceof ExpiredJwtException) {
-            return "The JWT token has expired";
+            return "Token JWT đã hết hạn";
         } 
         // Lỗi xử lý file
         else if (exception instanceof IOException) {
-            return "Error processing the file";
+            return "Lỗi xử lý tệp tin";
         } 
         // Argument không hợp lệ
         else if (exception instanceof IllegalArgumentException) {
-            return "Invalid argument provided";
+            return "Tham số truyền vào không hợp lệ";
         } 
         // Lỗi không xác định
         else {
-            return "Unknown internal server error";
+            return "Lỗi máy chủ nội bộ không xác định";
         }
     }
 

@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
-import vn.student.polyshoes.dto.GuestDto;
+import vn.student.polyshoes.dto.CustomerDto;
 import vn.student.polyshoes.dto.OrderDto;
 import vn.student.polyshoes.dto.OrderFilterDto;
 import vn.student.polyshoes.dto.OrderItemDto;
@@ -127,15 +127,14 @@ public class OrderController {
         }
     }
 
-
     // Tạo mới đơn hàng
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequestDto orderRequestDto) {
-        GuestDto guestDto = orderRequestDto.getGuestDto();
+        CustomerDto customerDto = orderRequestDto.getCustomerDto();
         OrderDto orderDto = orderRequestDto.getOrderDto();
         int customerId = orderRequestDto.getCustomerId();
         List<OrderItemDto> orderItemDtos = orderRequestDto.getOrderItemDtos();
-        OrderResponse createdOrder = orderService.createOrder(customerId, guestDto, orderDto, orderItemDtos);
+        OrderResponse createdOrder = orderService.createOrder(customerId, customerDto, orderDto, orderItemDtos);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
 
@@ -332,23 +331,6 @@ public class OrderController {
     }
 
     // Lấy lịch sử trạng thái đơn hàng
-    @GetMapping("/{orderId}/history")
-    public ResponseEntity<?> getOrderStatusHistory(@PathVariable String orderId) {
-        try {
-            List<OrderStatusHistoryResponse> history = orderStatusHistoryService.getOrderStatusHistory(orderId);
-            
-            return ResponseEntity.ok(Map.of(
-                "message", "Lấy lịch sử trạng thái thành công",
-                "history", history
-            ));
-            
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                .body(Map.of("error", "Lỗi khi lấy lịch sử: " + e.getMessage()));
-        }
-    }
-
-    // Lấy lịch sử trạng thái đơn hàng - endpoint thay thế cho frontend
     @GetMapping("/order-status/{orderId}/history")
     public ResponseEntity<?> getOrderStatusHistoryAlt(@PathVariable String orderId) {
         try {

@@ -20,11 +20,10 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
     List<OrderItem> findByOrder(Order order);
 
     // Lấy danh sách sản phẩm bán chạy nhất (sắp xếp theo số lượng bán giảm dần)
-    @Query("SELECT oi.productSize.productColor.product.productName, SUM(oi.quantity) " +
+    @Query("SELECT oi.productDetails.product.productName, SUM(oi.quantity) " +
            "FROM OrderItem oi " +
-           "JOIN oi.productSize ps " +
-           "JOIN ps.productColor pc " +
-           "JOIN pc.product p " +
+           "JOIN oi.productDetails pd " +
+           "JOIN pd.product p " +
            "GROUP BY p.productName " +
            "ORDER BY SUM(oi.quantity) DESC")
     List<Object[]> findBestSellingProducts();
